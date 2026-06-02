@@ -27,8 +27,8 @@ export const viewport: Viewport = {
   themeColor: '#1a807b',
 };
 
-// Verhindert Theme-Flackern vor Hydration
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');var d=t? t==='dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
+// Light Mode als Standard, Dark nur wenn explizit vom Nutzer gesetzt
+const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

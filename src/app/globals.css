@@ -3,11 +3,11 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f6f7f5;
+  --bg: #f0f4f8;
   --surface: #ffffff;
-  --border: #e3e6e1;
-  --text: #1c2522;
-  --muted: #5f6b66;
+  --border: #d0dbe8;
+  --text: #1a2332;
+  --muted: #5a6a7e;
 }
 .dark {
   --bg: #0f1614;
@@ -24,25 +24,25 @@ html, body {
 
 @layer components {
   .card {
-    @apply rounded-xl border bg-[var(--surface)] border-[var(--border)] shadow-sm;
+    @apply rounded-2xl border bg-[var(--surface)] border-[var(--border)] shadow-sm;
   }
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium
            transition-colors focus:outline-none focus:ring-2 focus:ring-brand-400 disabled:opacity-50;
   }
-  .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700; }
+  .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700 shadow-sm; }
   .btn-ghost   { @apply btn border border-[var(--border)] hover:bg-black/5 dark:hover:bg-white/5; }
-  .btn-danger  { @apply btn bg-red-600 text-white hover:bg-red-700; }
-  .label { @apply block text-sm font-medium mb-1 text-[var(--text)]; }
+  .btn-danger  { @apply btn bg-red-500 text-white hover:bg-red-600; }
+  .label { @apply block text-sm font-semibold mb-1.5 text-[var(--text)]; }
   .input, .select, .textarea {
-    @apply w-full rounded-lg border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-sm
-           text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-brand-400;
+    @apply w-full rounded-xl border border-[var(--border)] bg-white dark:bg-[var(--bg)] px-3 py-2.5 text-sm
+           text-[var(--text)] focus:outline-none focus:ring-2 focus:ring-brand-400 shadow-sm;
   }
-  .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
-  .th { @apply px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-[var(--muted)]; }
-  .td { @apply px-3 py-2 text-sm align-middle; }
+  .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .th { @apply px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-[var(--muted)]; }
+  .td { @apply px-4 py-3 text-sm align-middle; }
   .kuerzel {
-    @apply inline-flex h-7 min-w-7 items-center justify-center rounded-md bg-brand-100 px-1.5
+    @apply inline-flex h-7 min-w-7 items-center justify-center rounded-lg bg-brand-100 px-1.5
            font-mono text-xs font-bold text-brand-800 dark:bg-brand-900/50 dark:text-brand-200;
   }
 }
