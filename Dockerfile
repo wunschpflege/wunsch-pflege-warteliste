@@ -9,8 +9,8 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-EXPOSE 3000
-ENV PORT=3000
+EXPOSE 8080
+ENV PORT=8080
 ENV HOSTNAME="0.0.0.0"
 ENV NODE_ENV=production
 
