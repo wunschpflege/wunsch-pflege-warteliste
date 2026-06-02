@@ -1,0 +1,223 @@
+// ============================================================
+//  Wunsch-Pflege GmbH - Wartelistenverwaltung
+//  Prisma Datenbankschema (PostgreSQL)
+// ============================================================
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------- Enums ----------------------------
+
+enum Role {
+  GESCHAEFTSFUEHRUNG // Vollzugriff
+  PDL // Pflegedienstleitung
+  VERWALTUNG // Verwaltung
+}
+
+enum Status {
+  NEUE_ANFRAGE
+  WARTELISTE
+  BESICHTIGUNG_GEPLANT
+  AUFNAHME_IN_VORBEREITUNG
+  PLATZ_ANGEBOTEN
+  EINGEZOGEN
+  ABGELEHNT
+  ARCHIVIERT
+}
+
+enum Prioritaet {
+  NIEDRIG
+  NORMAL
+  HOCH
+  DRINGEND
+}
+
+enum Pflegegrad {
+  KEINER
+  PG1
+  PG2
+  PG3
+  PG4
+  PG5
+}
+
+enum Geschlecht {
+  MAENNLICH
+  WEIBLICH
+  DIVERS
+  EGAL
+}
+
+enum WiedervorlageTyp {
+  RUECKRUF
+  WIEDERVORLAGE
+  PLATZ_ERINNERUNG
+  SONSTIGES
+}
+
+// ---------------------------- Modelle ----------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  email        String?
+  passwordHash String
+  vorname      String
+  nachname     String
+  // Automatisch erzeugtes Mitarbeiterkuerzel (z. B. "AM", "SW", "FB")
+  kuerzel      String
+  role         Role     @default(VERWALTUNG)
+  aktiv        Boolean  @default(true)
+  letzterLogin DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  angelegteInteressenten Interessent[]  @relation("ErstelltVon")
+  wiedervorlagen         Wiedervorlage[]
+  auditEintraege         AuditLog[]
+
+  @@index([kuerzel])
+}
+
+model Standort {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  adresse     String?
+  bemerkungen String?
+  aktiv       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  interessenten Interessent[]
+  plaetze       Platz[]
+}
+
+model Interessent {
+  id String @id @default(cuid())
+
+  // --- Patientendaten ---
+  vorname            String
+  nachname           String
+  geburtsdatum       DateTime?
+  pflegegrad         Pflegegrad @default(KEINER)
+  krankenkasse       String?
+  wohnsituation      String?
+  gewuenschterEinzug DateTime?
+  diagnosen          String?
+  mobilitaet         String?
+  besonderheiten     String?
+  bemerkungen        String?
+
+  // --- Angehoeriger / Ansprechpartner ---
+  angehoerigerVorname   String?
+  angehoerigerNachname  String?
+  angehoerigerBeziehung String?
+  angStrasse            String?
+  angHausnummer         String?
+  angPlz                String?
+  angOrt                String?
+  telefonFestnetz       String?
+  telefonMobil          String?
+  email                 String?
+
+  // --- Aufnahmeinformationen ---
+  status     Status     @default(NEUE_ANFRAGE)
+  prioritaet Prioritaet @default(NORMAL)
+
+  standort   Standort? @relation(fields: [standortId], references: [id])
+  standortId String?
+
+  // Datum der Eintragung + erstellender Mitarbeiter
+  erstelltVon   User   @relation("ErstelltVon", fields: [erstelltVonId], references: [id])
+  erstelltVonId String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  historie       Historie[]
+  wiedervorlagen Wiedervorlage[]
+
+  @@index([nachname])
+  @@index([status])
+  @@index([standortId])
+  @@index([pflegegrad])
+}
+
+// Automatische, datensatzbezogene Historie (fachlicher Verlauf)
+model Historie {
+  id            String   @id @default(cuid())
+  interessent   Interessent @relation(fields: [interessentId], references: [id], onDelete: Cascade)
+  interessentId String
+  // Mitarbeiterkuerzel + Name werden zum Zeitpunkt der Aktion festgehalten
+  kuerzel       String
+  mitarbeiter   String
+  aktion        String   // z. B. "Datensatz angelegt", "Status geaendert"
+  feld          String?  // welches Feld
+  altWert       String?
+  neuWert       String?
+  zeitpunkt     DateTime @default(now())
+
+  @@index([interessentId])
+  @@index([zeitpunkt])
+}
+
+model Platz {
+  id              String      @id @default(cuid())
+  standort        Standort    @relation(fields: [standortId], references: [id])
+  standortId      String
+  zimmernummer    String
+  freiAb          DateTime?
+  geschlechtPref  Geschlecht  @default(EGAL)
+  belegt          Boolean     @default(false)
+  bemerkungen     String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([standortId])
+  @@index([belegt])
+}
+
+model Wiedervorlage {
+  id            String           @id @default(cuid())
+  typ           WiedervorlageTyp @default(WIEDERVORLAGE)
+  titel         String
+  notiz         String?
+  faelligAm     DateTime
+  erledigt      Boolean          @default(false)
+  erledigtAm    DateTime?
+
+  interessent   Interessent? @relation(fields: [interessentId], references: [id], onDelete: SetNull)
+  interessentId String?
+
+  zustaendig    User    @relation(fields: [zustaendigId], references: [id])
+  zustaendigId  String
+  kuerzel       String
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([faelligAm])
+  @@index([erledigt])
+}
+
+// Technischer Audit-Trail (DSGVO / Nachvollziehbarkeit) ueber alle Entitaeten
+model AuditLog {
+  id         String   @id @default(cuid())
+  zeitpunkt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId     String?
+  kuerzel    String?
+  aktion     String   // CREATE | UPDATE | DELETE | LOGIN | LOGOUT | EXPORT
+  entitaet   String   // z. B. "Interessent", "Standort", "User"
+  entitaetId String?
+  details    String?
+
+  @@index([zeitpunkt])
+  @@index([entitaet])
+}

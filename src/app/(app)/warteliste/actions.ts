@@ -1,0 +1,140 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/prisma';
+import { requireUser } from '@/lib/auth';
+import { requirePermission } from '@/lib/rbac';
+import { audit, logHistorie, diffAndLog } from '@/lib/audit';
+import { interessentSchema, wiedervorlageSchema, formToObject } from '@/lib/validation';
+
+export interface ActionState {
+  ok: boolean;
+  error?: string;
+  fieldErrors?: Record<string, string>;
+}
+
+const FIELDS = [
+  'vorname', 'nachname', 'geburtsdatum', 'pflegegrad', 'krankenkasse', 'wohnsituation',
+  'gewuenschterEinzug', 'diagnosen', 'mobilitaet', 'besonderheiten', 'bemerkungen',
+  'angehoerigerVorname', 'angehoerigerNachname', 'angehoerigerBeziehung', 'angStrasse',
+  'angHausnummer', 'angPlz', 'angOrt', 'telefonFestnetz', 'telefonMobil', 'email',
+  'status', 'prioritaet', 'standortId',
+] as const;
+
+export async function createInteressent(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  requirePermission(user, 'interessent.create');
+
+  const parsed = interessentSchema.safeParse(formToObject(fd));
+  if (!parsed.success) {
+    return { ok: false, fieldErrors: flattenZod(parsed.error), error: 'Bitte Eingaben prüfen.' };
+  }
+  const data = parsed.data;
+
+  const created = await prisma.interessent.create({
+    data: { ...data, erstelltVonId: user.id },
+  });
+
+  await logHistorie(created.id, user, 'Datensatz angelegt');
+  await audit(user, 'CREATE', 'Interessent', created.id, `${data.vorname} ${data.nachname}`);
+
+  revalidatePath('/warteliste');
+  revalidatePath('/dashboard');
+  redirect(`/warteliste/${created.id}`);
+}
+
+export async function updateInteressent(id: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  requirePermission(user, 'interessent.update');
+
+  const existing = await prisma.interessent.findUnique({ where: { id }, include: { standort: true } });
+  if (!existing) return { ok: false, error: 'Datensatz nicht gefunden.' };
+
+  const parsed = interessentSchema.safeParse(formToObject(fd));
+  if (!parsed.success) {
+    return { ok: false, fieldErrors: flattenZod(parsed.error), error: 'Bitte Eingaben prüfen.' };
+  }
+  const data = parsed.data;
+
+  // Standortnamen fuer die Historie aufloesen
+  let standortNameNeu: string | undefined;
+  if (data.standortId && data.standortId !== existing.standortId) {
+    const s = await prisma.standort.findUnique({ where: { id: data.standortId } });
+    standortNameNeu = s?.name;
+  } else {
+    standortNameNeu = existing.standort?.name;
+  }
+
+  const vorher: Record<string, unknown> = {};
+  const nachher: Record<string, unknown> = {};
+  for (const f of FIELDS) {
+    vorher[f] = (existing as Record<string, unknown>)[f];
+    nachher[f] = (data as Record<string, unknown>)[f];
+  }
+
+  await prisma.interessent.update({ where: { id }, data });
+  await diffAndLog(id, user, vorher, nachher, existing.standort?.name, standortNameNeu);
+  await audit(user, 'UPDATE', 'Interessent', id, `${data.vorname} ${data.nachname}`);
+
+  revalidatePath(`/warteliste/${id}`);
+  revalidatePath('/warteliste');
+  revalidatePath('/dashboard');
+  return { ok: true };
+}
+
+export async function deleteInteressent(id: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'interessent.delete');
+  const ex = await prisma.interessent.findUnique({ where: { id } });
+  await prisma.interessent.delete({ where: { id } });
+  await audit(user, 'DELETE', 'Interessent', id, ex ? `${ex.vorname} ${ex.nachname}` : undefined);
+  revalidatePath('/warteliste');
+  redirect('/warteliste');
+}
+
+export async function addWiedervorlage(_prev: ActionState, fd: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  requirePermission(user, 'wiedervorlage.manage');
+  const parsed = wiedervorlageSchema.safeParse(formToObject(fd));
+  if (!parsed.success) return { ok: false, error: 'Bitte Titel und Datum angeben.' };
+  const d = parsed.data;
+
+  const wv = await prisma.wiedervorlage.create({
+    data: {
+      typ: d.typ, titel: d.titel, notiz: d.notiz, faelligAm: d.faelligAm,
+      interessentId: d.interessentId, zustaendigId: user.id, kuerzel: user.kuerzel,
+    },
+  });
+  if (d.interessentId) {
+    await logHistorie(d.interessentId, user, `Wiedervorlage angelegt: ${d.titel}`);
+    revalidatePath(`/warteliste/${d.interessentId}`);
+  }
+  await audit(user, 'CREATE', 'Wiedervorlage', wv.id, d.titel);
+  revalidatePath('/wiedervorlagen');
+  revalidatePath('/dashboard');
+  return { ok: true };
+}
+
+export async function toggleWiedervorlage(id: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'wiedervorlage.manage');
+  const wv = await prisma.wiedervorlage.findUnique({ where: { id } });
+  if (!wv) return;
+  await prisma.wiedervorlage.update({
+    where: { id },
+    data: { erledigt: !wv.erledigt, erledigtAm: !wv.erledigt ? new Date() : null },
+  });
+  await audit(user, 'UPDATE', 'Wiedervorlage', id, wv.erledigt ? 'wieder offen' : 'erledigt');
+  revalidatePath('/wiedervorlagen');
+  revalidatePath('/dashboard');
+}
+
+function flattenZod(err: import('zod').ZodError): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const issue of err.issues) {
+    const key = String(issue.path[0] ?? '_');
+    if (!out[key]) out[key] = issue.message;
+  }
+  return out;
+}
