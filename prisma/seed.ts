@@ -1,6 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
-import { buildInitials } from '../src/lib/initials';
+
+function buildInitials(vorname: string, nachname: string): string {
+  const first = vorname.trim()[0] ?? '';
+  const last = nachname.trim()[0] ?? '';
+  return (first + last).toUpperCase();
+}
 
 const prisma = new PrismaClient();
 
