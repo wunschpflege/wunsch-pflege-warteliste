@@ -13,7 +13,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
-    "release": "prisma migrate deploy && tsx prisma/seed.ts"
+    "release": "prisma migrate resolve --applied 20260602000000_init || true && prisma migrate deploy && tsx prisma/seed.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
