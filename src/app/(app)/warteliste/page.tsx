@@ -6,7 +6,9 @@ import {
   STATUS_LABEL, STATUS_COLOR, PFLEGEGRAD_LABEL, PRIO_LABEL,
   GESCHLECHT_LABEL, WV_TYP_LABEL, fmtDate,
 } from '@/lib/labels';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, Platz, Standort } from '@prisma/client';
+
+type PlatzMitStandort = Platz & { standort: Standort };
 import { deleteInteressent, toggleWiedervorlage, deleteWiedervorlage } from './actions';
 import { savePlatz, togglePlatzBelegt, deletePlatz } from '../plaetze/actions';
 import PlatzFormClient from '../plaetze/form';
@@ -62,7 +64,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
   }
 
   // ── Tab: Freie Plätze ──────────────────────────────────────────
-  let plaetze: Awaited<ReturnType<typeof prisma.platz.findMany>> = [];
+  let plaetze: PlatzMitStandort[] = [];
   let matchMap = new Map<string, Awaited<ReturnType<typeof matchKandidaten>>>();
   if (tab === 'plaetze' && can(user, 'platz.manage')) {
     plaetze = await prisma.platz.findMany({
