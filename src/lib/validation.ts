@@ -49,6 +49,7 @@ export const standortSchema = z.object({
   strasse: optStr,
   hausnummer: optStr,
   plz: optStr,
+  ort: optStr,
   bemerkungen: optStr,
   aktiv: z.coerce.boolean().default(true),
 });

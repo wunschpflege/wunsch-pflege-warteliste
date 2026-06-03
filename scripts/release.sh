@@ -7,6 +7,7 @@ echo "=== Release: Datenbankmigrationen ==="
 npx prisma migrate resolve --applied 20260602000000_init 2>/dev/null || true
 npx prisma migrate resolve --applied 20260603000000_standort_address 2>/dev/null || true
 npx prisma migrate resolve --applied 20260603000002_settings 2>/dev/null || true
+npx prisma migrate resolve --applied 20260603000003_standort_ort 2>/dev/null || true
 
 # Neue Migrationen anwenden
 echo "Applying migrations..."

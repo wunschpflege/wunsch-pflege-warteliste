@@ -92,6 +92,7 @@ model Standort {
   strasse     String?
   hausnummer  String?
   plz         String?
+  ort         String?
   bemerkungen String?
   aktiv       Boolean  @default(true)
   createdAt   DateTime @default(now())

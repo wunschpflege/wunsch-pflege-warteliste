@@ -39,6 +39,7 @@ export default async function StandortePage({
             strasse: editStandort.strasse ?? '',
             hausnummer: editStandort.hausnummer ?? '',
             plz: editStandort.plz ?? '',
+            ort: editStandort.ort ?? '',
             bemerkungen: editStandort.bemerkungen ?? '',
             aktiv: editStandort.aktiv,
           }}
@@ -65,7 +66,7 @@ export default async function StandortePage({
           </thead>
           <tbody>
             {standorte.map((s) => {
-              const adresse = [s.strasse, s.hausnummer, s.plz].filter(Boolean).join(' ');
+              const adresse = [s.strasse, s.hausnummer, s.plz, s.ort].filter(Boolean).join(' ');
               return (
                 <tr key={s.id} className="border-b border-[var(--border)] last:border-0">
                   <td className="td font-medium">{s.name}</td>

@@ -1,0 +1,1 @@
+ALTER TABLE "Standort" ADD COLUMN "ort" TEXT;
