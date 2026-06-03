@@ -36,8 +36,6 @@ export default function Nav({ user, canUsers, canStandorte, canEinstellungen }: 
   const links = [
     { href: '/dashboard',     label: 'Dashboard',     key: 'dashboard' },
     { href: '/warteliste',    label: 'Warteliste',     key: 'warteliste' },
-    { href: '/plaetze',       label: 'Freie Plätze',  key: 'plaetze' },
-    { href: '/wiedervorlagen',label: 'Wiedervorlagen', key: 'wiedervorlagen' },
     ...(canStandorte ? [{ href: '/standorte', label: 'Standorte', key: 'standorte' }] : []),
     ...(canUsers     ? [{ href: '/benutzer',       label: 'Benutzer',      key: 'benutzer'       }] : []),
     ...(canEinstellungen ? [{ href: '/einstellungen', label: 'Einstellungen', key: 'einstellungen' }] : []),
