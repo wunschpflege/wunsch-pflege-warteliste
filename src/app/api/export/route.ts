@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
@@ -21,9 +21,9 @@ const COLUMNS: { header: string; value: (r: Row) => string }[] = [
   { header: 'Wohnsituation', value: (r) => r.wohnsituation ?? '' },
   { header: 'Gew. Einzug', value: (r) => fmtDate(r.gewuenschterEinzug) },
   { header: 'Standort', value: (r) => r.standort?.name ?? '' },
-  { header: 'Priorität', value: (r) => PRIO_LABEL[r.prioritaet] },
+  { header: 'PrioritÃ¤t', value: (r) => PRIO_LABEL[r.prioritaet] },
   { header: 'Status', value: (r) => STATUS_LABEL[r.status] },
-  { header: 'Angehöriger', value: (r) => [r.angehoerigerVorname, r.angehoerigerNachname].filter(Boolean).join(' ') },
+  { header: 'AngehÃ¶riger', value: (r) => [r.angehoerigerVorname, r.angehoerigerNachname].filter(Boolean).join(' ') },
   { header: 'Beziehung', value: (r) => r.angehoerigerBeziehung ?? '' },
   { header: 'Telefon Festnetz', value: (r) => r.telefonFestnetz ?? '' },
   { header: 'Telefon Mobil', value: (r) => r.telefonMobil ?? '' },
@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
     orderBy: [{ prioritaet: 'desc' }, { createdAt: 'asc' }],
   });
 
-  await audit(user, 'EXPORT', 'Interessent', undefined, `Format ${format.toUpperCase()}, ${rows.length} Datensätze`);
+  await audit(user, 'EXPORT', 'Interessent', undefined, `Format ${format.toUpperCase()}, ${rows.length} DatensÃ¤tze`);
 
   const stamp = new Date().toISOString().slice(0, 10);
   const filename = `warteliste_${stamp}`;
@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
   if (format === 'csv') {
     const header = COLUMNS.map((c) => csvCell(c.header)).join(';');
     const body = rows.map((r) => COLUMNS.map((c) => csvCell(c.value(r))).join(';')).join('\r\n');
-    const csv = '\uFEFF' + header + '\r\n' + body; // BOM für Excel/Umlaute
+    const csv = '\uFEFF' + header + '\r\n' + body; // BOM fÃ¼r Excel/Umlaute
     return new NextResponse(csv, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
@@ -106,28 +106,28 @@ export async function GET(req: NextRequest) {
 
     const html = `<!doctype html>
 <html lang="de"><head><meta charset="utf-8" />
-<title>Warteliste – Wunsch-Pflege GmbH</title>
+<title>Warteliste â€“ Wunsch-Pflege GmbH</title>
 <style>
   * { box-sizing: border-box; }
   body { font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; margin: 24px; color: #111; }
-  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #0f766e; padding-bottom: 8px; margin-bottom: 16px; }
-  h1 { font-size: 18px; color: #0f766e; margin: 0; }
+  header { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #dc2626; padding-bottom: 8px; margin-bottom: 16px; }
+  h1 { font-size: 18px; color: #dc2626; margin: 0; }
   .meta { font-size: 11px; color: #555; }
   table { width: 100%; border-collapse: collapse; font-size: 9px; }
   th, td { border: 1px solid #d4d4d4; padding: 4px 5px; text-align: left; vertical-align: top; }
-  th { background: #0f766e; color: #fff; font-weight: 600; }
+  th { background: #dc2626; color: #fff; font-weight: 600; }
   tr:nth-child(even) td { background: #f5f7f7; }
   .toolbar { margin-bottom: 14px; }
-  button { background: #0f766e; color: #fff; border: 0; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; }
+  button { background: #dc2626; color: #fff; border: 0; padding: 8px 14px; border-radius: 6px; font-size: 13px; cursor: pointer; }
   @media print { .toolbar { display: none; } body { margin: 8mm; } @page { size: A4 landscape; margin: 10mm; } }
 </style></head>
 <body>
   <div class="toolbar"><button onclick="window.print()">Als PDF drucken / speichern</button></div>
   <header>
-    <h1>Wunsch-Pflege GmbH · Warteliste</h1>
-    <div class="meta">Erstellt: ${esc(fmtDateTime(new Date()))} · ${rows.length} Datensätze · ${esc(user.kuerzel)}</div>
+    <h1>Wunsch-Pflege GmbH Â· Warteliste</h1>
+    <div class="meta">Erstellt: ${esc(fmtDateTime(new Date()))} Â· ${rows.length} DatensÃ¤tze Â· ${esc(user.kuerzel)}</div>
   </header>
-  <table><thead><tr>${headCells}</tr></thead><tbody>${bodyRows || `<tr><td colspan="${COLUMNS.length}">Keine Datensätze.</td></tr>`}</tbody></table>
+  <table><thead><tr>${headCells}</tr></thead><tbody>${bodyRows || `<tr><td colspan="${COLUMNS.length}">Keine DatensÃ¤tze.</td></tr>`}</tbody></table>
   <script>window.addEventListener('load', function(){ setTimeout(function(){ window.print(); }, 350); });</script>
 </body></html>`;
 
@@ -138,3 +138,4 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ error: 'Unbekanntes Format. Erlaubt: csv, xlsx, pdf' }, { status: 400 });
 }
+

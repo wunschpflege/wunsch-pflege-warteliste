@@ -41,7 +41,7 @@ export default async function PlaetzePage() {
                     {p.standort.name} · Zimmer {p.zimmernummer}
                     {p.belegt
                       ? <span className="badge ml-2 bg-gray-200 text-gray-600 dark:bg-gray-700">belegt</span>
-                      : <span className="badge ml-2 bg-brand-100 text-brand-800 dark:bg-brand-900/50 dark:text-brand-200">frei</span>}
+                      : <span className="badge ml-2 bg-brand-100 text-brand-800">frei</span>}
                   </p>
                   <p className="text-sm text-muted">
                     Frei ab {fmtDate(p.freiAb)} · Bevorzugt: {GESCHLECHT_LABEL[p.geschlechtPref]}

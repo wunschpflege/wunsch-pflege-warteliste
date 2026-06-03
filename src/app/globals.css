@@ -9,7 +9,7 @@
   --text: #2c1f14;
   --muted: #8a7060;
   --sidebar: #ffffff;
-  --sidebar-active: #0f766e;
+  --sidebar-active: #dc2626;
 }
 
 * { box-sizing: border-box; }
@@ -53,17 +53,17 @@ html, body {
 
   .btn-primary {
     @apply btn bg-brand-600 text-white hover:bg-brand-700;
-    box-shadow: 0 1px 3px rgba(26,128,123,0.3);
+    box-shadow: 0 1px 3px rgba(220,38,38,0.3);
   }
   .btn-primary:hover {
-    box-shadow: 0 2px 6px rgba(26,128,123,0.4);
+    box-shadow: 0 2px 6px rgba(220,38,38,0.4);
   }
   .btn-ghost {
     @apply btn border border-[var(--border)] text-[var(--text)] hover:bg-[#f0e9df];
   }
   .btn-danger {
-    @apply btn bg-red-500 text-white hover:bg-red-600;
-    box-shadow: 0 1px 3px rgba(239,68,68,0.3);
+    @apply btn bg-red-700 text-white hover:bg-red-800;
+    box-shadow: 0 1px 3px rgba(185,28,28,0.3);
   }
 
   .label {
@@ -78,7 +78,7 @@ html, body {
     transition: border-color 120ms, box-shadow 120ms;
   }
   .input:focus, .select:focus, .textarea:focus {
-    box-shadow: 0 0 0 3px rgba(26,128,123,0.12);
+    box-shadow: 0 0 0 3px rgba(220,38,38,0.12);
   }
 
   .badge {
@@ -95,8 +95,8 @@ html, body {
   .kuerzel {
     @apply inline-flex h-8 min-w-8 items-center justify-center rounded-lg
            font-mono text-xs font-bold;
-    background: linear-gradient(135deg, #d3f4ef, #abe9e1);
-    color: #0f766e;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #b91c1c;
   }
 }
 
@@ -114,5 +114,5 @@ tbody tr {
   transition: background-color 100ms;
 }
 tbody tr:hover {
-  background-color: rgba(139,100,72,0.06);
+  background-color: rgba(220,38,38,0.04);
 }

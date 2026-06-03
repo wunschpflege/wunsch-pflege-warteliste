@@ -74,7 +74,7 @@ export default async function Dashboard() {
             {standorte.map((s) => (
               <div key={s.id} className="flex items-center justify-between text-sm py-1 border-b border-[var(--border)] last:border-0">
                 <span>{s.name}</span>
-                <span className={`badge ${(freiMap.get(s.id) ?? 0) > 0 ? 'bg-brand-100 text-brand-800 dark:bg-brand-900/50 dark:text-brand-200' : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-300'}`}>
+                <span className={`badge ${(freiMap.get(s.id) ?? 0) > 0 ? 'bg-brand-100 text-brand-800' : 'bg-gray-100 text-gray-500'}`}>
                   {freiMap.get(s.id) ?? 0} frei
                 </span>
               </div>
