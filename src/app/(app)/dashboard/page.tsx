@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { STATUS_LABEL, STATUS_COLOR, fmtDateTime, fmtDate, WV_TYP_LABEL } from '@/lib/labels';
+import AktivitaetenBlock from '@/components/AktivitaetenBlock';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,7 @@ export default async function Dashboard() {
       orderBy: { faelligAm: 'asc' },
       take: 8,
     }),
-    prisma.auditLog.findMany({ orderBy: { zeitpunkt: 'desc' }, take: 10 }),
+    prisma.auditLog.findMany({ orderBy: { zeitpunkt: 'desc' }, take: 50 }),
   ]);
 
   const standorte = await prisma.standort.findMany({ where: { aktiv: true }, orderBy: { name: 'asc' } });
@@ -129,22 +130,7 @@ export default async function Dashboard() {
           </div>
         </section>
 
-        {/* Letzte Aktivitäten */}
-        <section className="card p-5">
-          <h2 className="font-semibold mb-3">Letzte Aktivitäten</h2>
-          <div className="space-y-2">
-            {letzteAktivitaeten.map((a) => (
-              <div key={a.id} className="flex items-start gap-2 text-sm">
-                {a.kuerzel && <span className="kuerzel">{a.kuerzel}</span>}
-                <div className="min-w-0">
-                  <p className="truncate">{a.aktion} · {a.entitaet}{a.details ? ` – ${a.details}` : ''}</p>
-                  <p className="text-xs text-muted">{fmtDateTime(a.zeitpunkt)}</p>
-                </div>
-              </div>
-            ))}
-            {letzteAktivitaeten.length === 0 && <p className="text-sm text-muted">Noch keine Aktivitäten.</p>}
-          </div>
-        </section>
+        <AktivitaetenBlock items={letzteAktivitaeten} fmtDateTime={fmtDateTime} />
       </div>
     </div>
   );
