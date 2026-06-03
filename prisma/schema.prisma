@@ -89,7 +89,9 @@ model User {
 model Standort {
   id          String   @id @default(cuid())
   name        String   @unique
-  adresse     String?
+  strasse     String?
+  hausnummer  String?
+  plz         String?
   bemerkungen String?
   aktiv       Boolean  @default(true)
   createdAt   DateTime @default(now())

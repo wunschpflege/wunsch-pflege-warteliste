@@ -3,23 +3,13 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f5f7fa;
+  --bg: #faf7f2;
   --surface: #ffffff;
-  --border: #e2e8f0;
-  --text: #0f172a;
-  --muted: #64748b;
+  --border: #e8ddd0;
+  --text: #2c1f14;
+  --muted: #8a7060;
   --sidebar: #ffffff;
   --sidebar-active: #0f766e;
-}
-
-.dark {
-  --bg: #0d1117;
-  --surface: #161b22;
-  --border: #30363d;
-  --text: #e6edf3;
-  --muted: #8b949e;
-  --sidebar: #161b22;
-  --sidebar-active: #1a807b;
 }
 
 * { box-sizing: border-box; }
@@ -68,7 +58,7 @@ html, body {
     box-shadow: 0 2px 6px rgba(26,128,123,0.4);
   }
   .btn-ghost {
-    @apply btn border border-[var(--border)] text-[var(--text)] hover:bg-slate-50 dark:hover:bg-white/5;
+    @apply btn border border-[var(--border)] text-[var(--text)] hover:bg-[#f0e9df];
   }
   .btn-danger {
     @apply btn bg-red-500 text-white hover:bg-red-600;
@@ -80,7 +70,7 @@ html, body {
   }
 
   .input, .select, .textarea {
-    @apply w-full rounded-xl border border-[var(--border)] bg-white dark:bg-[var(--bg)]
+    @apply w-full rounded-xl border border-[var(--border)] bg-white
            px-3.5 py-2.5 text-sm text-[var(--text)]
            focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-brand-400;
     box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -107,10 +97,6 @@ html, body {
     background: linear-gradient(135deg, #d3f4ef, #abe9e1);
     color: #0f766e;
   }
-  .dark .kuerzel {
-    background: rgba(26,128,123,0.2);
-    color: #5eead4;
-  }
 }
 
 .text-muted { color: var(--muted); }
@@ -127,8 +113,5 @@ tbody tr {
   transition: background-color 100ms;
 }
 tbody tr:hover {
-  background-color: rgba(15, 118, 110, 0.04);
-}
-.dark tbody tr:hover {
-  background-color: rgba(255,255,255,0.03);
+  background-color: rgba(139,100,72,0.06);
 }

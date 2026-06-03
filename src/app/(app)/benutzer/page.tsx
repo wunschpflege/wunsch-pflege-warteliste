@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { can, ROLE_LABEL } from '@/lib/rbac';
 import { fmtDateTime } from '@/lib/labels';
-import { saveUser, toggleUserAktiv } from './actions';
+import { saveUser, toggleUserAktiv, deleteUser } from './actions';
 import UserFormClient from './form';
 
 export const dynamic = 'force-dynamic';
@@ -81,11 +81,16 @@ export default async function BenutzerPage({
                   <div className="flex items-center gap-3">
                     <a href={`/benutzer?edit=${u.id}`} className="text-sm text-brand-600 hover:underline">Bearbeiten</a>
                     {u.id !== user!.id && (
-                      <form action={toggleUserAktiv.bind(null, u.id)}>
-                        <button className="text-sm text-brand-600 hover:underline">
-                          {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
-                        </button>
-                      </form>
+                      <>
+                        <form action={toggleUserAktiv.bind(null, u.id)}>
+                          <button className="text-sm text-brand-600 hover:underline">
+                            {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
+                          </button>
+                        </form>
+                        <form action={deleteUser.bind(null, u.id)}>
+                          <button className="btn-danger text-xs px-2 py-1">Löschen</button>
+                        </form>
+                      </>
                     )}
                   </div>
                 </td>

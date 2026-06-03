@@ -26,6 +26,18 @@ export async function saveStandort(id: string | null, _prev: { ok: boolean; erro
   return { ok: true };
 }
 
+export async function deleteStandort(id: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'standort.manage');
+  const count = await prisma.interessent.count({ where: { standortId: id } });
+  if (count > 0) throw new Error('Standort hat zugeordnete Interessenten und kann nicht gelöscht werden.');
+  const s = await prisma.standort.findUnique({ where: { id } });
+  await prisma.standort.delete({ where: { id } });
+  await audit(user, 'DELETE', 'Standort', id, s?.name);
+  revalidatePath('/standorte');
+  revalidatePath('/dashboard');
+}
+
 export async function toggleStandort(id: string): Promise<void> {
   const user = await requireUser();
   requirePermission(user, 'standort.manage');

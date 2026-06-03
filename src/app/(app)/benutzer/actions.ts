@@ -72,6 +72,17 @@ export async function saveUser(id: string | null, _prev: State, fd: FormData): P
   return { ok: true };
 }
 
+export async function deleteUser(id: string): Promise<void> {
+  const actor = await requireUser();
+  requirePermission(actor, 'user.manage');
+  if (id === actor.id) return;
+  const u = await prisma.user.findUnique({ where: { id } });
+  if (!u) return;
+  await prisma.user.delete({ where: { id } });
+  await audit(actor, 'DELETE', 'User', id, `${u.vorname} ${u.nachname} (${u.kuerzel})`);
+  revalidatePath('/benutzer');
+}
+
 export async function toggleUserAktiv(id: string): Promise<void> {
   const actor = await requireUser();
   requirePermission(actor, 'user.manage');

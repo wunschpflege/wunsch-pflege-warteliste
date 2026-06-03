@@ -5,9 +5,11 @@ import { useActionState, useRef, useEffect } from 'react';
 type State = { ok: boolean; error?: string };
 const init: State = { ok: false };
 
+type Defaults = { strasse?: string | null; hausnummer?: string | null; plz?: string | null };
+
 export default function StandortFormClient({
-  action, title, submitLabel,
-}: { action: (prev: State, fd: FormData) => Promise<State>; title: string; submitLabel: string }) {
+  action, title, submitLabel, defaults,
+}: { action: (prev: State, fd: FormData) => Promise<State>; title: string; submitLabel: string; defaults?: Defaults }) {
   const [state, formAction, pending] = useActionState(action, init);
   const ref = useRef<HTMLFormElement>(null);
 
@@ -24,8 +26,16 @@ export default function StandortFormClient({
           <input name="name" className="input" required placeholder="z. B. WG Sölde" />
         </div>
         <div>
-          <label className="label">Adresse</label>
-          <input name="adresse" className="input" />
+          <label className="label">Straße</label>
+          <input name="strasse" className="input" defaultValue={defaults?.strasse ?? ''} />
+        </div>
+        <div>
+          <label className="label">Hausnummer</label>
+          <input name="hausnummer" className="input" defaultValue={defaults?.hausnummer ?? ''} />
+        </div>
+        <div>
+          <label className="label">PLZ</label>
+          <input name="plz" className="input" defaultValue={defaults?.plz ?? ''} />
         </div>
         <div className="sm:col-span-2">
           <label className="label">Bemerkungen</label>

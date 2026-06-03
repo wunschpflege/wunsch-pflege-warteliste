@@ -46,7 +46,9 @@ export const userSchema = z.object({
 
 export const standortSchema = z.object({
   name: z.string().trim().min(1, 'Name erforderlich'),
-  adresse: optStr,
+  strasse: optStr,
+  hausnummer: optStr,
+  plz: optStr,
   bemerkungen: optStr,
   aktiv: z.coerce.boolean().default(true),
 });

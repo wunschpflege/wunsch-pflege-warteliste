@@ -16,7 +16,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         canUsers={can(user, 'user.manage')}
         canStandorte={can(user, 'standort.manage')}
       />
-      <main className="flex-1 min-w-0 p-4 md:p-8 max-w-6xl mx-auto w-full">{children}</main>
+      <main className="flex-1 min-w-0 p-4 md:p-8 max-w-full w-full overflow-x-auto">{children}</main>
     </div>
   );
 }

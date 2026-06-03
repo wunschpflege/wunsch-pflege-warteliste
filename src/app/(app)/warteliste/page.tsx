@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import { STATUS_LABEL, STATUS_COLOR, PFLEGEGRAD_LABEL, PRIO_LABEL, fmtDate } from '@/lib/labels';
 import type { Prisma } from '@prisma/client';
+import { deleteInteressent } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -131,21 +132,28 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
           <thead className="border-b border-[var(--border)]">
             <tr>
               <th className="th">Name</th>
+              <th className="th">Angehöriger</th>
               <th className="th">Standort</th>
               <th className="th">Pflegegrad</th>
               <th className="th">Priorität</th>
               <th className="th">Status</th>
               <th className="th">Eingetragen</th>
               <th className="th">MA</th>
+              <th className="th">Aktionen</th>
             </tr>
           </thead>
           <tbody>
             {eintraege.map((i) => (
-              <tr key={i.id} className="border-b border-[var(--border)] last:border-0 hover:bg-black/5 dark:hover:bg-white/5">
+              <tr key={i.id} className="border-b border-[var(--border)] last:border-0">
                 <td className="td">
                   <Link href={`/warteliste/${i.id}`} className="font-medium text-brand-600 hover:underline">
                     {i.nachname}, {i.vorname}
                   </Link>
+                </td>
+                <td className="td">
+                  {(i.angehoerigerVorname || i.angehoerigerNachname)
+                    ? <><span>{i.angehoerigerVorname} {i.angehoerigerNachname}</span><br /><span className="text-xs text-muted">{i.telefonMobil ?? i.telefonFestnetz ?? ''}</span></>
+                    : '–'}
                 </td>
                 <td className="td">{i.standort?.name ?? '–'}</td>
                 <td className="td">{PFLEGEGRAD_LABEL[i.pflegegrad]}</td>
@@ -153,10 +161,20 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
                 <td className="td"><span className={`badge ${STATUS_COLOR[i.status]}`}>{STATUS_LABEL[i.status]}</span></td>
                 <td className="td whitespace-nowrap">{fmtDate(i.createdAt)}</td>
                 <td className="td"><span className="kuerzel">{i.erstelltVon.kuerzel}</span></td>
+                <td className="td">
+                  <div className="flex items-center gap-2">
+                    <Link href={`/warteliste/${i.id}`} className="text-xs text-brand-600 hover:underline">Öffnen</Link>
+                    {can(user, 'interessent.delete') && (
+                      <form action={deleteInteressent.bind(null, i.id)}>
+                        <button className="btn-danger text-xs px-2 py-1">Löschen</button>
+                      </form>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
             {eintraege.length === 0 && (
-              <tr><td colSpan={7} className="td text-center text-muted py-8">Keine Einträge gefunden.</td></tr>
+              <tr><td colSpan={9} className="td text-center text-muted py-8">Keine Einträge gefunden.</td></tr>
             )}
           </tbody>
         </table>
