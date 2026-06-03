@@ -21,7 +21,7 @@ type PlatzMitStandort = Prisma.PlatzGetPayload<{
 type WiedervorlageMitRelationen = Prisma.WiedervorlageGetPayload<{
   include: { interessent: true; zustaendig: true };
 }>;
-import { deleteInteressent, toggleWiedervorlage, deleteWiedervorlage, toggleMarkiert as _tM } from './actions';
+import { toggleWiedervorlage, deleteWiedervorlage } from './actions';
 import { savePlatz, togglePlatzBelegt, deletePlatz } from '../plaetze/actions';
 import PlatzFormClient from '../plaetze/form';
 import WiedervorlageForm from '@/components/WiedervorlageForm';
@@ -242,7 +242,6 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
             }))}
             canUpdate={can(user, 'interessent.update')}
             canDelete={can(user, 'interessent.delete')}
-            deleteAction={() => {}}
             sortBy={sortBy}
             sortDir={sortDir}
             baseFilterQs={baseFilterQs}

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { STATUS_LABEL, STATUS_COLOR, PFLEGEGRAD_LABEL, PRIO_LABEL, fmtDate } from '@/lib/labels';
 import SchnellStatusSelect from './SchnellStatusSelect';
 import SortHeader from './SortHeader';
-import { toggleMarkiert, bulkStatusAendern } from '@/app/(app)/warteliste/actions';
+import { toggleMarkiert, bulkStatusAendern, deleteInteressent } from '@/app/(app)/warteliste/actions';
 
 const statusOptions = Object.entries(STATUS_LABEL) as [string, string][];
 
@@ -35,7 +35,6 @@ interface Props {
   eintraege: Eintrag[];
   canUpdate: boolean;
   canDelete: boolean;
-  deleteAction: (id: string) => void;
   sortBy: string;
   sortDir: string;
   baseFilterQs: string;
