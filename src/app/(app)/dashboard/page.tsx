@@ -130,7 +130,7 @@ export default async function Dashboard() {
           </div>
         </section>
 
-        <AktivitaetenBlock items={letzteAktivitaeten} fmtDateTime={fmtDateTime} />
+        <AktivitaetenBlock items={letzteAktivitaeten} />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { fmtDateTime } from '@/lib/labels';
 
 interface Aktivitaet {
   id: string;
@@ -13,13 +14,7 @@ interface Aktivitaet {
 
 const LIMIT = 5;
 
-export default function AktivitaetenBlock({
-  items,
-  fmtDateTime,
-}: {
-  items: Aktivitaet[];
-  fmtDateTime: (d: Date) => string;
-}) {
+export default function AktivitaetenBlock({ items }: { items: Aktivitaet[] }) {
   const [showAll, setShowAll] = useState(false);
   const visible = showAll ? items : items.slice(0, LIMIT);
 
