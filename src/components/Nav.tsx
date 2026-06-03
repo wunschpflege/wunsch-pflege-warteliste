@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { Role } from '@prisma/client';
-import ThemeToggle from './ThemeToggle';
 
 interface NavProps {
   user: { vorname: string; nachname: string; kuerzel: string; role: Role };
@@ -91,7 +90,6 @@ export default function Nav({ user, canUsers, canStandorte }: NavProps) {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={logout} className="btn-ghost flex-1 text-xs h-8">Abmelden</button>
-          <ThemeToggle />
         </div>
       </div>
     </>

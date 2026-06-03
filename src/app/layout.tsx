@@ -27,8 +27,8 @@ export const viewport: Viewport = {
   themeColor: '#1a807b',
 };
 
-// Light Mode als Standard, Dark nur wenn explizit vom Nutzer gesetzt
-const themeScript = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.classList.add('dark');}catch(e){}})();`;
+// Immer Light Mode — Dark Mode komplett deaktiviert
+const themeScript = `(function(){try{localStorage.removeItem('theme');}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
