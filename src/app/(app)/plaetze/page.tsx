@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import { matchKandidaten } from '@/lib/matching';
-import { savePlatz, togglePlatzBelegt } from './actions';
+import { savePlatz, togglePlatzBelegt, deletePlatz } from './actions';
 import PlatzFormClient from './form';
 import { GESCHLECHT_LABEL, PFLEGEGRAD_LABEL, fmtDate, STATUS_LABEL } from '@/lib/labels';
 
@@ -48,9 +48,14 @@ export default async function PlaetzePage() {
                     {p.bemerkungen ? ` · ${p.bemerkungen}` : ''}
                   </p>
                 </div>
-                <form action={togglePlatzBelegt.bind(null, p.id)}>
-                  <button className="btn-ghost text-sm">{p.belegt ? 'Als frei markieren' : 'Als belegt markieren'}</button>
-                </form>
+                <div className="flex gap-2">
+                  <form action={togglePlatzBelegt.bind(null, p.id)}>
+                    <button className="btn-ghost text-sm">{p.belegt ? 'Als frei markieren' : 'Als belegt markieren'}</button>
+                  </form>
+                  <form action={deletePlatz.bind(null, p.id)}>
+                    <button className="btn-danger text-sm">Löschen</button>
+                  </form>
+                </div>
               </div>
 
               {!p.belegt && (

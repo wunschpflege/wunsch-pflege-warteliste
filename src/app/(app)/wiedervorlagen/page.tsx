@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/rbac';
-import { toggleWiedervorlage } from '../warteliste/actions';
+import { toggleWiedervorlage, deleteWiedervorlage } from '../warteliste/actions';
 import WiedervorlageForm from '@/components/WiedervorlageForm';
 import { WV_TYP_LABEL, fmtDate } from '@/lib/labels';
 
@@ -43,7 +43,7 @@ export default async function WiedervorlagenPage({ searchParams }: { searchParam
           <thead className="border-b border-[var(--border)]">
             <tr>
               <th className="th"></th><th className="th">Titel</th><th className="th">Typ</th>
-              <th className="th">Interessent</th><th className="th">Fällig</th><th className="th">Zuständig</th>
+              <th className="th">Interessent</th><th className="th">Fällig</th><th className="th">Zuständig</th><th className="th"></th>
             </tr>
           </thead>
           <tbody>
@@ -72,11 +72,16 @@ export default async function WiedervorlagenPage({ searchParams }: { searchParam
                     <span className={overdue ? 'text-red-600 font-medium' : ''}>{fmtDate(w.faelligAm)}</span>
                   </td>
                   <td className="td"><span className="kuerzel">{w.kuerzel}</span></td>
+                  <td className="td">
+                    <form action={deleteWiedervorlage.bind(null, w.id)}>
+                      <button className="btn-danger text-xs px-2 py-1">Löschen</button>
+                    </form>
+                  </td>
                 </tr>
               );
             })}
             {items.length === 0 && (
-              <tr><td colSpan={6} className="td text-center text-muted py-8">Keine {showDone ? 'erledigten' : 'offenen'} Wiedervorlagen.</td></tr>
+              <tr><td colSpan={7} className="td text-center text-muted py-8">Keine {showDone ? 'erledigten' : 'offenen'} Wiedervorlagen.</td></tr>
             )}
           </tbody>
         </table>

@@ -41,7 +41,8 @@ function buildUsername(vorname: string, nachname: string): string {
     s.toLowerCase()
       .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
       .replace(/[^a-z0-9]/g, '');
-  return `${normalize(vorname)}.${normalize(nachname)}`;
+  const first = normalize(vorname)[0] ?? '';
+  return `${first}.${normalize(nachname)}`;
 }
 
 async function ensureUser(opts: {
@@ -90,7 +91,7 @@ async function main() {
   console.log(`✓ Admin (Geschäftsführung): ${admin.username} / Kürzel ${admin.kuerzel}`);
 
   // --- Demodaten optional ---
-  if ((process.env.SEED_DEMO_DATA ?? 'true') !== 'true') {
+  if ((process.env.SEED_DEMO_DATA ?? 'false') !== 'true') {
     console.log('ℹ Demodaten übersprungen (SEED_DEMO_DATA != true).');
     return;
   }

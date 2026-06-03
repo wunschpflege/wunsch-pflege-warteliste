@@ -116,6 +116,17 @@ export async function addWiedervorlage(_prev: ActionState, fd: FormData): Promis
   return { ok: true };
 }
 
+export async function deleteWiedervorlage(id: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'wiedervorlage.manage');
+  const wv = await prisma.wiedervorlage.findUnique({ where: { id } });
+  if (!wv) return;
+  await prisma.wiedervorlage.delete({ where: { id } });
+  await audit(user, 'DELETE', 'Wiedervorlage', id, wv.titel);
+  revalidatePath('/wiedervorlagen');
+  revalidatePath('/dashboard');
+}
+
 export async function toggleWiedervorlage(id: string): Promise<void> {
   const user = await requireUser();
   requirePermission(user, 'wiedervorlage.manage');

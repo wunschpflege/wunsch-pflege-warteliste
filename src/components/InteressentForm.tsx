@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { useRouter } from 'next/navigation';
+import DateInput from './DateInput';
 import type { Interessent, Standort } from '@prisma/client';
 import { STATUS_LABEL, PRIO_LABEL, PFLEGEGRAD_LABEL, fmtDateInput } from '@/lib/labels';
 import type { ActionState } from '@/app/(app)/warteliste/actions';
@@ -25,6 +26,8 @@ function Field({
         </select>
       ) : rows ? (
         <textarea id={name} name={name} rows={rows} defaultValue={defaultValue ?? ''} className="textarea" />
+      ) : type === 'date' ? (
+        <DateInput id={name} name={name} defaultValue={defaultValue} />
       ) : (
         <input id={name} name={name} type={type} defaultValue={defaultValue ?? ''} className="input" />
       )}

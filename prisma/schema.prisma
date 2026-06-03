@@ -208,6 +208,13 @@ model Wiedervorlage {
   @@index([erledigt])
 }
 
+// System-Einstellungen (Key-Value)
+model SystemSettings {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 // Technischer Audit-Trail (DSGVO / Nachvollziehbarkeit) ueber alle Entitaeten
 model AuditLog {
   id         String   @id @default(cuid())
