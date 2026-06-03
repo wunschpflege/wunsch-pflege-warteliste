@@ -22,6 +22,10 @@ const FIELDS = [
   'status', 'prioritaet', 'standortId',
 ] as const;
 
+function getWunschStandorteIds(fd: FormData): string[] {
+  return fd.getAll('wunschStandorteIds').map(String).filter(Boolean);
+}
+
 export async function createInteressent(_prev: ActionState, fd: FormData): Promise<ActionState> {
   const user = await requireUser();
   requirePermission(user, 'interessent.create');
@@ -31,9 +35,14 @@ export async function createInteressent(_prev: ActionState, fd: FormData): Promi
     return { ok: false, fieldErrors: flattenZod(parsed.error), error: 'Bitte Eingaben prüfen.' };
   }
   const data = parsed.data;
+  const wunschIds = getWunschStandorteIds(fd);
 
   const created = await prisma.interessent.create({
-    data: { ...data, erstelltVonId: user.id },
+    data: {
+      ...data,
+      erstelltVonId: user.id,
+      wunschStandorte: wunschIds.length ? { connect: wunschIds.map((id) => ({ id })) } : undefined,
+    },
   });
 
   await logHistorie(created.id, user, 'Datensatz angelegt');
@@ -73,7 +82,14 @@ export async function updateInteressent(id: string, _prev: ActionState, fd: Form
     nachher[f] = (data as Record<string, unknown>)[f];
   }
 
-  await prisma.interessent.update({ where: { id }, data });
+  const wunschIds = getWunschStandorteIds(fd);
+  await prisma.interessent.update({
+    where: { id },
+    data: {
+      ...data,
+      wunschStandorte: { set: wunschIds.map((sid) => ({ id: sid })) },
+    },
+  });
   await diffAndLog(id, user, vorher, nachher, existing.standort?.name, standortNameNeu);
   await audit(user, 'UPDATE', 'Interessent', id, `${data.vorname} ${data.nachname}`);
 

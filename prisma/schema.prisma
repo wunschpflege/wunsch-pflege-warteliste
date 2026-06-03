@@ -98,8 +98,9 @@ model Standort {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  interessenten Interessent[]
-  plaetze       Platz[]
+  interessenten       Interessent[] @relation("AktuellerStandort")
+  wunschInteressenten Interessent[] @relation("WunschStandorte")
+  plaetze             Platz[]
 }
 
 model Interessent {
@@ -134,8 +135,9 @@ model Interessent {
   status     Status     @default(NEUE_ANFRAGE)
   prioritaet Prioritaet @default(NORMAL)
 
-  standort   Standort? @relation(fields: [standortId], references: [id])
-  standortId String?
+  standort         Standort? @relation("AktuellerStandort", fields: [standortId], references: [id])
+  standortId       String?
+  wunschStandorte  Standort[] @relation("WunschStandorte")
 
   // Datum der Eintragung + erstellender Mitarbeiter
   erstelltVon   User   @relation("ErstelltVon", fields: [erstelltVonId], references: [id])

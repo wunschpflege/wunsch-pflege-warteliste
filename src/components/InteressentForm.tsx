@@ -37,11 +37,12 @@ function Field({
 }
 
 export default function InteressentForm({
-  action, standorte, data, submitLabel,
+  action, standorte, data, wunschStandorteIds, submitLabel,
 }: {
   action: Action;
   standorte: Pick<Standort, 'id' | 'name'>[];
   data?: Interessent | null;
+  wunschStandorteIds?: string[];
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, init);
@@ -98,9 +99,27 @@ export default function InteressentForm({
       <section className="card p-5">
         <h2 className="font-semibold mb-4">Aufnahmeinformationen</h2>
         <div className="grid sm:grid-cols-2 gap-4">
-          <Field name="standortId" label="Gewünschte Einrichtung / Standort" defaultValue={data?.standortId} options={standortOpts} />
           <Field name="status" label="Status" defaultValue={data?.status ?? 'NEUE_ANFRAGE'} options={statusOpts} />
           <Field name="prioritaet" label="Priorität" defaultValue={data?.prioritaet ?? 'NORMAL'} options={prioOpts} />
+
+          {/* Gewünschte Standorte – Mehrfachauswahl */}
+          <div className="sm:col-span-2">
+            <label className="label">Gewünschte Einrichtungen (Mehrfachauswahl möglich)</label>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-1.5 p-3 rounded-xl border border-[var(--border)] bg-white max-h-56 overflow-y-auto">
+              {standorte.map((s) => (
+                <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer hover:text-brand-600 py-0.5">
+                  <input
+                    type="checkbox"
+                    name="wunschStandorteIds"
+                    value={s.id}
+                    defaultChecked={wunschStandorteIds?.includes(s.id)}
+                    className="h-4 w-4 accent-brand-600 cursor-pointer"
+                  />
+                  {s.name}
+                </label>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

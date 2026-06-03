@@ -23,6 +23,7 @@ export default async function DetailPage({ params }: { params: Promise<{ id: str
       erstelltVon: true,
       historie: { orderBy: { zeitpunkt: 'desc' } },
       wiedervorlagen: { orderBy: { faelligAm: 'asc' } },
+      wunschStandorte: { select: { id: true } },
     },
   });
   if (!i) notFound();
@@ -52,7 +53,7 @@ export default async function DetailPage({ params }: { params: Promise<{ id: str
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-5">
           {editable ? (
-            <InteressentForm action={boundUpdate} standorte={standorte} data={i} submitLabel="Änderungen speichern" />
+            <InteressentForm action={boundUpdate} standorte={standorte} data={i} wunschStandorteIds={i.wunschStandorte.map(s => s.id)} submitLabel="Änderungen speichern" />
           ) : (
             <div className="card p-5 text-sm text-muted">Sie haben keine Berechtigung zum Bearbeiten.</div>
           )}
