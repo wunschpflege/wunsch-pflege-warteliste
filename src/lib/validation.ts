@@ -29,6 +29,9 @@ export const interessentSchema = z.object({
   telefonFestnetz: optStr,
   telefonMobil: optStr,
   email: z.string().trim().email('Ungültige E-Mail').optional().or(z.literal('')).transform((v) => (v ? v : null)),
+  platzAngebotenAm: optDate,
+  platzAngebotenInfo: optStr,
+  rueckmeldungBis: optDate,
   status: z.enum([
     'NEUE_ANFRAGE', 'WARTELISTE', 'BESICHTIGUNG_GEPLANT', 'AUFNAHME_IN_VORBEREITUNG',
     'PLATZ_ANGEBOTEN', 'EINGEZOGEN', 'ABGELEHNT', 'ARCHIVIERT',

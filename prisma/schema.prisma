@@ -132,8 +132,13 @@ model Interessent {
   email                 String?
 
   // --- Aufnahmeinformationen ---
-  status     Status     @default(NEUE_ANFRAGE)
-  prioritaet Prioritaet @default(NORMAL)
+  status              Status     @default(NEUE_ANFRAGE)
+  prioritaet          Prioritaet @default(NORMAL)
+
+  // --- Angebot & Rückmeldung ---
+  platzAngebotenAm    DateTime?  // Wann wurde ein Zimmer angeboten
+  platzAngebotenInfo  String?    // Welches Zimmer / welche WG
+  rueckmeldungBis     DateTime?  // Bis wann soll Rückmeldung kommen
 
   standort         Standort? @relation("AktuellerStandort", fields: [standortId], references: [id])
   standortId       String?

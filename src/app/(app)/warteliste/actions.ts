@@ -20,6 +20,7 @@ const FIELDS = [
   'angehoerigerVorname', 'angehoerigerNachname', 'angehoerigerBeziehung', 'angStrasse',
   'angHausnummer', 'angPlz', 'angOrt', 'telefonFestnetz', 'telefonMobil', 'email',
   'status', 'prioritaet', 'standortId',
+  'platzAngebotenAm', 'platzAngebotenInfo', 'rueckmeldungBis',
 ] as const;
 
 function getWunschStandorteIds(fd: FormData): string[] {

@@ -70,7 +70,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
       include: { standort: true, erstelltVon: true },
       orderBy: [{ prioritaet: 'desc' }, { createdAt: 'asc' }],
       take: 300,
-    });
+    }) as InteressentMitRelationen[];
   }
 
   // ── Tab: Freie Plätze ──────────────────────────────────────────
@@ -207,18 +207,25 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
                   <th className="th">Pflegegrad</th>
                   <th className="th">Priorität</th>
                   <th className="th">Status</th>
-                  <th className="th">Eingetragen</th>
+                  <th className="th">Wartezeit</th>
+                  <th className="th">Angebot / Rückmeldung</th>
                   <th className="th">MA</th>
                   <th className="th"></th>
                 </tr>
               </thead>
               <tbody>
-                {eintraege.map((i) => (
-                  <tr key={i.id} className="border-b border-[var(--border)] last:border-0">
+                {eintraege.map((i) => {
+                  const wartetage = Math.floor((now.getTime() - new Date(i.createdAt).getTime()) / 86_400_000);
+                  const zeilenKlasse = wartetage >= 90 ? 'border-l-4 border-l-red-500 bg-red-50' :
+                                       wartetage >= 60 ? 'border-l-4 border-l-amber-400 bg-amber-50' : '';
+                  const rueckmeldungUeberfaellig = (i as any).rueckmeldungBis && new Date((i as any).rueckmeldungBis) < now;
+                  return (
+                  <tr key={i.id} className={`border-b border-[var(--border)] last:border-0 ${zeilenKlasse}`}>
                     <td className="td">
                       <Link href={`/warteliste/${i.id}`} className="font-medium text-brand-600 hover:underline">
                         {i.nachname}, {i.vorname}
                       </Link>
+                      {wartetage >= 90 && <p className="text-xs text-red-600 font-medium">⚠ {wartetage} Tage</p>}
                     </td>
                     <td className="td">
                       {(i.angehoerigerVorname || i.angehoerigerNachname)
@@ -229,7 +236,22 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
                     <td className="td">{PFLEGEGRAD_LABEL[i.pflegegrad]}</td>
                     <td className="td">{PRIO_LABEL[i.prioritaet]}</td>
                     <td className="td"><span className={`badge ${STATUS_COLOR[i.status]}`}>{STATUS_LABEL[i.status]}</span></td>
-                    <td className="td whitespace-nowrap">{fmtDate(i.createdAt)}</td>
+                    <td className="td whitespace-nowrap text-sm">
+                      {wartetage < 30 ? `${wartetage}d` : wartetage < 365 ? `${Math.floor(wartetage/30)}M` : `${Math.floor(wartetage/365)}J ${Math.floor((wartetage%365)/30)}M`}
+                    </td>
+                    <td className="td text-sm">
+                      {(i as any).platzAngebotenAm ? (
+                        <div>
+                          <p className="text-xs">Angeboten: <strong>{fmtDate((i as any).platzAngebotenAm)}</strong></p>
+                          {(i as any).platzAngebotenInfo && <p className="text-xs text-muted">{(i as any).platzAngebotenInfo}</p>}
+                          {(i as any).rueckmeldungBis && (
+                            <p className={`text-xs font-medium ${rueckmeldungUeberfaellig ? 'text-red-600' : 'text-amber-600'}`}>
+                              {rueckmeldungUeberfaellig ? '⚠ Überfällig' : '⏳'} bis {fmtDate((i as any).rueckmeldungBis)}
+                            </p>
+                          )}
+                        </div>
+                      ) : '–'}
+                    </td>
                     <td className="td"><span className="kuerzel">{i.erstelltVon.kuerzel}</span></td>
                     <td className="td">
                       <div className="flex items-center gap-2">
@@ -242,9 +264,10 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
                 {eintraege.length === 0 && (
-                  <tr><td colSpan={9} className="td text-center text-muted py-8">Keine Einträge gefunden.</td></tr>
+                  <tr><td colSpan={10} className="td text-center text-muted py-8">Keine Einträge gefunden.</td></tr>
                 )}
               </tbody>
             </table>

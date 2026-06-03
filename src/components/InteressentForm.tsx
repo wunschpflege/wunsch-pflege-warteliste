@@ -102,6 +102,20 @@ export default function InteressentForm({
           <Field name="status" label="Status" defaultValue={data?.status ?? 'NEUE_ANFRAGE'} options={statusOpts} />
           <Field name="prioritaet" label="Priorität" defaultValue={data?.prioritaet ?? 'NORMAL'} options={prioOpts} />
 
+          {/* Zimmer angeboten */}
+          <div className="sm:col-span-2">
+            <label className="label">Zimmer angeboten am</label>
+            <DateInput name="platzAngebotenAm" defaultValue={fmtDateInput(data?.platzAngebotenAm)} />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="label">Angebotenes Zimmer / WG</label>
+            <input name="platzAngebotenInfo" className="input" defaultValue={data?.platzAngebotenInfo ?? ''} placeholder="z. B. Zimmer 4 · WG Aplerbeck" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="label">Rückmeldung erwünscht bis</label>
+            <DateInput name="rueckmeldungBis" defaultValue={fmtDateInput(data?.rueckmeldungBis)} />
+          </div>
+
           {/* Gewünschte Standorte – Mehrfachauswahl */}
           <div className="sm:col-span-2">
             <label className="label">Gewünschte Einrichtungen (Mehrfachauswahl möglich)</label>
