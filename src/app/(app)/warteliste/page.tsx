@@ -6,9 +6,19 @@ import {
   STATUS_LABEL, STATUS_COLOR, PFLEGEGRAD_LABEL, PRIO_LABEL,
   GESCHLECHT_LABEL, WV_TYP_LABEL, fmtDate,
 } from '@/lib/labels';
-import type { Prisma, Platz, Standort } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
-type PlatzMitStandort = Platz & { standort: Standort };
+type InteressentMitRelationen = Prisma.InteressentGetPayload<{
+  include: { standort: true; erstelltVon: true };
+}>;
+
+type PlatzMitStandort = Prisma.PlatzGetPayload<{
+  include: { standort: true };
+}>;
+
+type WiedervorlageMitRelationen = Prisma.WiedervorlageGetPayload<{
+  include: { interessent: true; zustaendig: true };
+}>;
 import { deleteInteressent, toggleWiedervorlage, deleteWiedervorlage } from './actions';
 import { savePlatz, togglePlatzBelegt, deletePlatz } from '../plaetze/actions';
 import PlatzFormClient from '../plaetze/form';
@@ -34,7 +44,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
   ]);
 
   // ── Tab: Interessenten ──────────────────────────────────────────
-  let eintraege: Awaited<ReturnType<typeof prisma.interessent.findMany>> = [];
+  let eintraege: InteressentMitRelationen[] = [];
   if (tab === 'interessenten') {
     const where: Prisma.InteressentWhereInput = {};
     const and: Prisma.InteressentWhereInput[] = [];
@@ -77,7 +87,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
   }
 
   // ── Tab: Wiedervorlagen ────────────────────────────────────────
-  let wiedervorlagen: Awaited<ReturnType<typeof prisma.wiedervorlage.findMany>> = [];
+  let wiedervorlagen: WiedervorlageMitRelationen[] = [];
   if (tab === 'wiedervorlagen' && can(user, 'wiedervorlage.manage')) {
     const showDone = sp.wv === 'erledigt';
     wiedervorlagen = await prisma.wiedervorlage.findMany({
