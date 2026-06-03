@@ -1,20 +1,12 @@
 #!/bin/sh
 set -e
 
-echo "=== Release: Datenbankmigrationen ==="
+echo "=== Release: Datenbank synchronisieren ==="
 
-# Markiere Init-Migration als angewendet (falls DB durch db push erstellt wurde)
-npx prisma migrate resolve --applied 20260602000000_init 2>/dev/null || true
-npx prisma migrate resolve --applied 20260603000000_standort_address 2>/dev/null || true
-npx prisma migrate resolve --applied 20260603000002_settings 2>/dev/null || true
-# Korrektur: Migration die faelschlicherweise als applied markiert wurde zuruecksetzen
-npx prisma migrate resolve --rolled-back 20260603000003_standort_ort 2>/dev/null || true
+# db push synchronisiert das Schema direkt mit der DB (keine Migration-Konflikte)
+npx prisma db push --accept-data-loss
 
-# Neue Migrationen anwenden
-echo "Applying migrations..."
-npx prisma migrate deploy
-
-echo "Running seed..."
+echo "=== Seed ausführen ==="
 npx tsx prisma/seed.ts
 
 echo "=== Release abgeschlossen ==="
