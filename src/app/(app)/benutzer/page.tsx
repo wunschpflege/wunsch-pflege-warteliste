@@ -3,8 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { can, ROLE_LABEL } from '@/lib/rbac';
 import { fmtDateTime } from '@/lib/labels';
-import { saveUser, toggleUserAktiv, deleteUser } from './actions';
+import { saveUser, toggleUserAktiv } from './actions';
 import UserFormClient from './form';
+import DeleteUserButton from '@/components/DeleteUserButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,9 +88,7 @@ export default async function BenutzerPage({
                             {u.aktiv ? 'Deaktivieren' : 'Aktivieren'}
                           </button>
                         </form>
-                        <form action={deleteUser.bind(null, u.id)}>
-                          <button className="btn-danger text-xs px-2 py-1">Löschen</button>
-                        </form>
+                        <DeleteUserButton userId={u.id} />
                       </>
                     )}
                   </div>

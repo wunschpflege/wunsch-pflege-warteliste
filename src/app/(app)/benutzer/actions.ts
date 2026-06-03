@@ -73,15 +73,35 @@ export async function saveUser(id: string | null, _prev: State, fd: FormData): P
   return { ok: true };
 }
 
-export async function deleteUser(id: string): Promise<void> {
+export async function deleteUser(_prev: State, fd: FormData): Promise<State> {
+  const id = String(fd.get('userId') ?? '');
   const actor = await requireUser();
   requirePermission(actor, 'user.manage');
-  if (id === actor.id) return;
+  if (id === actor.id) return { ok: false, error: 'Du kannst dich nicht selbst löschen.' };
+
   const u = await prisma.user.findUnique({ where: { id } });
-  if (!u) return;
+  if (!u) return { ok: false, error: 'Benutzer nicht gefunden.' };
+
+  // Abhängigkeiten prüfen
+  const [interessenten, wiedervorlagen] = await Promise.all([
+    prisma.interessent.count({ where: { erstelltVonId: id } }),
+    prisma.wiedervorlage.count({ where: { zustaendigId: id } }),
+  ]);
+
+  if (interessenten > 0 || wiedervorlagen > 0) {
+    const parts = [];
+    if (interessenten > 0) parts.push(`${interessenten} Interessent${interessenten > 1 ? 'en' : ''}`);
+    if (wiedervorlagen > 0) parts.push(`${wiedervorlagen} Wiedervorlage${wiedervorlagen > 1 ? 'n' : ''}`);
+    return {
+      ok: false,
+      error: `Kann nicht gelöscht werden – ${parts.join(' und ')} sind diesem Benutzer zugeordnet. Bitte zuerst die Einträge einem anderen Mitarbeiter zuweisen oder den Benutzer nur deaktivieren.`,
+    };
+  }
+
   await prisma.user.delete({ where: { id } });
   await audit(actor, 'DELETE', 'User', id, `${u.vorname} ${u.nachname} (${u.kuerzel})`);
   revalidatePath('/benutzer');
+  return { ok: true };
 }
 
 export async function toggleUserAktiv(id: string): Promise<void> {
