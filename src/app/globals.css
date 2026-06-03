@@ -116,3 +116,9 @@ tbody tr {
 tbody tr:hover {
   background-color: rgba(220,38,38,0.04);
 }
+
+@media print {
+  nav, aside, .no-print { display: none !important; }
+  .card { box-shadow: none; border: 1px solid #ccc; }
+  body { font-size: 12px; }
+}

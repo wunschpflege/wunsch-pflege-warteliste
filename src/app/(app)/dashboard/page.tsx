@@ -27,6 +27,7 @@ export default async function Dashboard() {
   const [
     freiePlaetze, warteliste, neueWoche, rueckrufe,
     plaetzeProStandort, wiedervorlagen, letzteAktivitaeten,
+    langeWartezeit, ueberfaelligeRueckmeldungen,
   ] = await Promise.all([
     prisma.platz.count({ where: { belegt: false } }),
     prisma.interessent.count({ where: { status: { in: ['WARTELISTE', 'NEUE_ANFRAGE', 'BESICHTIGUNG_GEPLANT'] } } }),
@@ -40,6 +41,8 @@ export default async function Dashboard() {
       take: 8,
     }),
     prisma.auditLog.findMany({ orderBy: { zeitpunkt: 'desc' }, take: 50 }),
+    prisma.interessent.count({ where: { createdAt: { lte: new Date(Date.now() - 90 * 86400000) }, status: { notIn: ['EINGEZOGEN', 'ABGELEHNT', 'ARCHIVIERT'] } } }),
+    prisma.interessent.count({ where: { rueckmeldungBis: { lt: now }, status: { notIn: ['EINGEZOGEN', 'ABGELEHNT', 'ARCHIVIERT'] } } }),
   ]);
 
   const standorte = await prisma.standort.findMany({ where: { aktiv: true }, orderBy: { name: 'asc' } });
@@ -58,6 +61,21 @@ export default async function Dashboard() {
         <h1 className="text-2xl font-semibold">Willkommen, {user?.vorname}</h1>
         <p className="text-muted text-sm">Übersicht vom {fmtDate(now)}</p>
       </div>
+
+      {(langeWartezeit > 0 || ueberfaelligeRueckmeldungen > 0) && (
+        <div className="space-y-2">
+          {langeWartezeit > 0 && (
+            <div className="rounded-xl bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-800 px-4 py-3 text-red-800 dark:text-red-200 text-sm font-medium">
+              ⚠ {langeWartezeit} {langeWartezeit === 1 ? 'Person wartet' : 'Personen warten'} länger als 3 Monate
+            </div>
+          )}
+          {ueberfaelligeRueckmeldungen > 0 && (
+            <div className="rounded-xl bg-orange-100 dark:bg-orange-900/30 border border-orange-300 dark:border-orange-800 px-4 py-3 text-orange-800 dark:text-orange-200 text-sm font-medium">
+              ⏰ {ueberfaelligeRueckmeldungen} {ueberfaelligeRueckmeldungen === 1 ? 'Rückmeldung überfällig' : 'Rückmeldungen überfällig'}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Freie WG-Plätze" value={freiePlaetze} href="/plaetze" accent="text-brand-600" />

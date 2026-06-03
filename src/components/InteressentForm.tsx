@@ -77,6 +77,20 @@ export default function InteressentForm({
           <Field name="mobilitaet" label="Mobilität" defaultValue={data?.mobilitaet} />
           <Field name="besonderheiten" label="Besonderheiten" defaultValue={data?.besonderheiten} />
           <Field name="bemerkungen" label="Bemerkungen" defaultValue={data?.bemerkungen} rows={3} full />
+          <Field name="schnellnotiz" label="Schnellnotiz (sichtbar in der Liste)" defaultValue={(data as any)?.schnellnotiz} full />
+          <Field name="letzterKontakt" label="Letzter Kontakt" type="date" defaultValue={fmtDateInput((data as any)?.letzterKontakt)} />
+          <div>
+            <label className="flex items-center gap-2 cursor-pointer text-sm">
+              <input
+                type="checkbox"
+                name="markiert"
+                value="true"
+                defaultChecked={(data as any)?.markiert === true}
+                className="h-4 w-4 accent-brand-600 cursor-pointer"
+              />
+              Als wichtig markieren ⭐
+            </label>
+          </div>
         </div>
       </section>
 

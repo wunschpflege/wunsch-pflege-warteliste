@@ -32,6 +32,9 @@ export const interessentSchema = z.object({
   platzAngebotenAm: optDate,
   platzAngebotenInfo: optStr,
   rueckmeldungBis: optDate,
+  schnellnotiz: optStr,
+  letzterKontakt: optDate,
+  markiert: z.coerce.boolean().default(false),
   status: z.enum([
     'NEUE_ANFRAGE', 'WARTELISTE', 'BESICHTIGUNG_GEPLANT', 'AUFNAHME_IN_VORBEREITUNG',
     'PLATZ_ANGEBOTEN', 'EINGEZOGEN', 'ABGELEHNT', 'ARCHIVIERT',

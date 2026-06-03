@@ -118,6 +118,9 @@ model Interessent {
   mobilitaet         String?
   besonderheiten     String?
   bemerkungen        String?
+  schnellnotiz    String?    // Kurze interne Notiz sichtbar in der Liste
+  letzterKontakt  DateTime?  // Datum des letzten Kontakts
+  markiert        Boolean    @default(false) // Manuell markiert/geflaggt
 
   // --- Angehoeriger / Ansprechpartner ---
   angehoerigerVorname   String?

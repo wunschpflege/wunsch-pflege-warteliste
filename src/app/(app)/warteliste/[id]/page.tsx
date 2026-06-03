@@ -8,6 +8,7 @@ import WiedervorlageForm from '@/components/WiedervorlageForm';
 import DeleteButton from '@/components/DeleteButton';
 import { updateInteressent, deleteInteressent } from '../actions';
 import { fmtDateTime, WV_TYP_LABEL, STATUS_LABEL, STATUS_COLOR, fmtDate } from '@/lib/labels';
+import DruckButton from '@/components/DruckButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,7 +48,10 @@ export default async function DetailPage({ params }: { params: Promise<{ id: str
             Angelegt am {fmtDate(i.createdAt)} von <span className="kuerzel">{i.erstelltVon.kuerzel}</span> {i.erstelltVon.vorname} {i.erstelltVon.nachname}
           </p>
         </div>
-        <span className={`badge ${STATUS_COLOR[i.status]} text-sm`}>{STATUS_LABEL[i.status]}</span>
+        <div className="flex items-center gap-2">
+          <DruckButton />
+          <span className={`badge ${STATUS_COLOR[i.status]} text-sm`}>{STATUS_LABEL[i.status]}</span>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">

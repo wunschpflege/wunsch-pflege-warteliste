@@ -3,10 +3,12 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import {
-  STATUS_LABEL, STATUS_COLOR, PFLEGEGRAD_LABEL, PRIO_LABEL,
+  STATUS_LABEL, STATUS_COLOR, PFLEGEGRAD_LABEL,
   GESCHLECHT_LABEL, WV_TYP_LABEL, fmtDate,
 } from '@/lib/labels';
 import type { Prisma } from '@prisma/client';
+import SuchverlaufInput from '@/components/SuchverlaufInput';
+import WartelisteTabelle from '@/components/WartelisteTabelle';
 
 type InteressentMitRelationen = Prisma.InteressentGetPayload<{
   include: { standort: true; erstelltVon: true };
@@ -19,7 +21,7 @@ type PlatzMitStandort = Prisma.PlatzGetPayload<{
 type WiedervorlageMitRelationen = Prisma.WiedervorlageGetPayload<{
   include: { interessent: true; zustaendig: true };
 }>;
-import { deleteInteressent, toggleWiedervorlage, deleteWiedervorlage } from './actions';
+import { deleteInteressent, toggleWiedervorlage, deleteWiedervorlage, toggleMarkiert as _tM } from './actions';
 import { savePlatz, togglePlatzBelegt, deletePlatz } from '../plaetze/actions';
 import PlatzFormClient from '../plaetze/form';
 import WiedervorlageForm from '@/components/WiedervorlageForm';
@@ -34,6 +36,9 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
   const user = await getSession();
   const tab = sp.tab ?? 'interessenten';
   const q = (sp.q ?? '').trim();
+  const sortBy = sp.sortBy ?? 'createdAt';
+  const sortDir = (sp.sortDir ?? 'asc') as 'asc' | 'desc';
+  const nurMarkierte = sp.markiert === '1';
   const now = new Date();
   const in7 = new Date(Date.now() + 7 * 86_400_000);
 
@@ -60,15 +65,19 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
     if (sp.status)      and.push({ status: sp.status as never });
     if (sp.pflegegrad)  and.push({ pflegegrad: sp.pflegegrad as never });
     if (sp.mitarbeiter) and.push({ erstelltVonId: sp.mitarbeiter });
+    if (nurMarkierte) and.push({ markiert: true } as never);
     if (sp.von || sp.bis) and.push({ createdAt: {
       ...(sp.von ? { gte: new Date(sp.von) } : {}),
       ...(sp.bis ? { lte: new Date(sp.bis + 'T23:59:59') } : {}),
     }});
     if (and.length) where.AND = and;
+    const allowedSortFields = ['createdAt', 'nachname', 'prioritaet', 'status'] as const;
+    type SortField = typeof allowedSortFields[number];
+    const safeSortBy: SortField = (allowedSortFields as readonly string[]).includes(sortBy) ? sortBy as SortField : 'createdAt';
     eintraege = await prisma.interessent.findMany({
       where,
       include: { standort: true, erstelltVon: true },
-      orderBy: [{ prioritaet: 'desc' }, { createdAt: 'asc' }],
+      orderBy: [{ [safeSortBy]: sortDir }],
       take: 300,
     }) as InteressentMitRelationen[];
   }
@@ -97,6 +106,11 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
       take: 200,
     });
   }
+
+  const baseFilterQs = new URLSearchParams(
+    Object.entries({ tab: 'interessenten', q: sp.q ?? '', standort: sp.standort ?? '', status: sp.status ?? '', pflegegrad: sp.pflegegrad ?? '', mitarbeiter: sp.mitarbeiter ?? '', von: sp.von ?? '', bis: sp.bis ?? '', markiert: sp.markiert ?? '' })
+      .filter(([, v]) => v) as [string, string][]
+  ).toString();
 
   const exportQs = new URLSearchParams(
     Object.entries(sp).filter(([k, v]) => v && k !== 'tab') as [string, string][],
@@ -151,7 +165,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
             <input type="hidden" name="tab" value="interessenten" />
             <div className="lg:col-span-2">
               <label className="label">Suche (Name, Telefon, Angehörige)</label>
-              <input name="q" defaultValue={q} className="input" placeholder="z. B. Müller oder 0231…" />
+              <SuchverlaufInput name="q" defaultValue={q} placeholder="z. B. Müller oder 0231…" />
             </div>
             <div>
               <label className="label">Standort</label>
@@ -189,6 +203,13 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
               <label className="label">Bis</label>
               <input type="date" name="bis" defaultValue={sp.bis ?? ''} className="input" />
             </div>
+            <div>
+              <label className="label">&nbsp;</label>
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input type="checkbox" name="markiert" value="1" defaultChecked={nurMarkierte} className="h-4 w-4 accent-brand-600" />
+                Nur markierte ⭐
+              </label>
+            </div>
             <div className="flex items-end gap-2">
               <button className="btn-primary flex-1" type="submit">Filtern</button>
               <Link href="/warteliste?tab=interessenten" className="btn-ghost">Reset</Link>
@@ -197,81 +218,35 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
 
           <p className="text-sm text-muted">{eintraege.length} Einträge</p>
 
-          <div className="card overflow-x-auto">
-            <table className="w-full">
-              <thead className="border-b border-[var(--border)]">
-                <tr>
-                  <th className="th">Name</th>
-                  <th className="th">Angehöriger</th>
-                  <th className="th">Standort</th>
-                  <th className="th">Pflegegrad</th>
-                  <th className="th">Priorität</th>
-                  <th className="th">Status</th>
-                  <th className="th">Wartezeit</th>
-                  <th className="th">Angebot / Rückmeldung</th>
-                  <th className="th">MA</th>
-                  <th className="th"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {eintraege.map((i) => {
-                  const wartetage = Math.floor((now.getTime() - new Date(i.createdAt).getTime()) / 86_400_000);
-                  const zeilenKlasse = wartetage >= 90 ? 'border-l-4 border-l-red-500 bg-red-50' :
-                                       wartetage >= 60 ? 'border-l-4 border-l-amber-400 bg-amber-50' : '';
-                  const rueckmeldungUeberfaellig = (i as any).rueckmeldungBis && new Date((i as any).rueckmeldungBis) < now;
-                  return (
-                  <tr key={i.id} className={`border-b border-[var(--border)] last:border-0 ${zeilenKlasse}`}>
-                    <td className="td">
-                      <Link href={`/warteliste/${i.id}`} className="font-medium text-brand-600 hover:underline">
-                        {i.nachname}, {i.vorname}
-                      </Link>
-                      {wartetage >= 90 && <p className="text-xs text-red-600 font-medium">⚠ {wartetage} Tage</p>}
-                    </td>
-                    <td className="td">
-                      {(i.angehoerigerVorname || i.angehoerigerNachname)
-                        ? <><span>{i.angehoerigerVorname} {i.angehoerigerNachname}</span><br /><span className="text-xs text-muted">{i.telefonMobil ?? i.telefonFestnetz ?? ''}</span></>
-                        : '–'}
-                    </td>
-                    <td className="td">{i.standort?.name ?? '–'}</td>
-                    <td className="td">{PFLEGEGRAD_LABEL[i.pflegegrad]}</td>
-                    <td className="td">{PRIO_LABEL[i.prioritaet]}</td>
-                    <td className="td"><span className={`badge ${STATUS_COLOR[i.status]}`}>{STATUS_LABEL[i.status]}</span></td>
-                    <td className="td whitespace-nowrap text-sm">
-                      {wartetage < 30 ? `${wartetage}d` : wartetage < 365 ? `${Math.floor(wartetage/30)}M` : `${Math.floor(wartetage/365)}J ${Math.floor((wartetage%365)/30)}M`}
-                    </td>
-                    <td className="td text-sm">
-                      {(i as any).platzAngebotenAm ? (
-                        <div>
-                          <p className="text-xs">Angeboten: <strong>{fmtDate((i as any).platzAngebotenAm)}</strong></p>
-                          {(i as any).platzAngebotenInfo && <p className="text-xs text-muted">{(i as any).platzAngebotenInfo}</p>}
-                          {(i as any).rueckmeldungBis && (
-                            <p className={`text-xs font-medium ${rueckmeldungUeberfaellig ? 'text-red-600' : 'text-amber-600'}`}>
-                              {rueckmeldungUeberfaellig ? '⚠ Überfällig' : '⏳'} bis {fmtDate((i as any).rueckmeldungBis)}
-                            </p>
-                          )}
-                        </div>
-                      ) : '–'}
-                    </td>
-                    <td className="td"><span className="kuerzel">{i.erstelltVon.kuerzel}</span></td>
-                    <td className="td">
-                      <div className="flex items-center gap-2">
-                        <Link href={`/warteliste/${i.id}`} className="text-xs text-brand-600 hover:underline">Öffnen</Link>
-                        {can(user, 'interessent.delete') && (
-                          <form action={deleteInteressent.bind(null, i.id)}>
-                            <button className="btn-danger text-xs px-2 py-1">Löschen</button>
-                          </form>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                  );
-                })}
-                {eintraege.length === 0 && (
-                  <tr><td colSpan={10} className="td text-center text-muted py-8">Keine Einträge gefunden.</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <WartelisteTabelle
+            eintraege={eintraege.map((i) => ({
+              id: i.id,
+              vorname: i.vorname,
+              nachname: i.nachname,
+              pflegegrad: i.pflegegrad,
+              prioritaet: i.prioritaet,
+              status: i.status,
+              createdAt: i.createdAt,
+              letzterKontakt: (i as any).letzterKontakt ?? null,
+              schnellnotiz: (i as any).schnellnotiz ?? null,
+              markiert: (i as any).markiert ?? false,
+              telefonMobil: i.telefonMobil ?? null,
+              telefonFestnetz: i.telefonFestnetz ?? null,
+              angehoerigerVorname: i.angehoerigerVorname ?? null,
+              angehoerigerNachname: i.angehoerigerNachname ?? null,
+              platzAngebotenAm: (i as any).platzAngebotenAm ?? null,
+              platzAngebotenInfo: (i as any).platzAngebotenInfo ?? null,
+              rueckmeldungBis: (i as any).rueckmeldungBis ?? null,
+              standort: i.standort ?? null,
+              erstelltVon: i.erstelltVon,
+            }))}
+            canUpdate={can(user, 'interessent.update')}
+            canDelete={can(user, 'interessent.delete')}
+            deleteAction={() => {}}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            baseFilterQs={baseFilterQs}
+          />
         </>
       )}
 

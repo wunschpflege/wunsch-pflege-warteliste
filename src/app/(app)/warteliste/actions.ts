@@ -21,6 +21,7 @@ const FIELDS = [
   'angHausnummer', 'angPlz', 'angOrt', 'telefonFestnetz', 'telefonMobil', 'email',
   'status', 'prioritaet', 'standortId',
   'platzAngebotenAm', 'platzAngebotenInfo', 'rueckmeldungBis',
+  'schnellnotiz', 'letzterKontakt', 'markiert',
 ] as const;
 
 function getWunschStandorteIds(fd: FormData): string[] {
@@ -37,6 +38,17 @@ export async function createInteressent(_prev: ActionState, fd: FormData): Promi
   }
   const data = parsed.data;
   const wunschIds = getWunschStandorteIds(fd);
+
+  const duplikat = await prisma.interessent.findFirst({
+    where: {
+      vorname: { equals: data.vorname, mode: 'insensitive' },
+      nachname: { equals: data.nachname, mode: 'insensitive' },
+      status: { notIn: ['ABGELEHNT', 'ARCHIVIERT'] },
+    },
+  });
+  if (duplikat) {
+    return { ok: false, error: `Mögliches Duplikat: ${duplikat.vorname} ${duplikat.nachname} existiert bereits (Status: ${duplikat.status}). Bitte prüfen oder trotzdem anlegen.` };
+  }
 
   const created = await prisma.interessent.create({
     data: {
@@ -156,6 +168,29 @@ export async function toggleWiedervorlage(id: string): Promise<void> {
   await audit(user, 'UPDATE', 'Wiedervorlage', id, wv.erledigt ? 'wieder offen' : 'erledigt');
   revalidatePath('/wiedervorlagen');
   revalidatePath('/dashboard');
+}
+
+export async function schnellStatusAendern(id: string, status: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'interessent.update');
+  await prisma.interessent.update({ where: { id }, data: { status: status as never } });
+  revalidatePath('/warteliste');
+}
+
+export async function toggleMarkiert(id: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'interessent.update');
+  const i = await prisma.interessent.findUnique({ where: { id } });
+  if (!i) return;
+  await prisma.interessent.update({ where: { id }, data: { markiert: !(i as any).markiert } });
+  revalidatePath('/warteliste');
+}
+
+export async function bulkStatusAendern(ids: string[], status: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'interessent.update');
+  await prisma.interessent.updateMany({ where: { id: { in: ids } }, data: { status: status as never } });
+  revalidatePath('/warteliste');
 }
 
 function flattenZod(err: import('zod').ZodError): Record<string, string> {
