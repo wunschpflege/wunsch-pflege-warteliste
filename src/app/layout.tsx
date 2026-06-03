@@ -1,19 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
-
-const sans = IBM_Plex_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-plex-sans',
-  display: 'swap',
-});
-const mono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
-  variable: '--font-plex-mono',
-  display: 'swap',
-});
 
 export const metadata: Metadata = {
   title: 'Wunsch-Pflege · Wartelistenverwaltung',
@@ -27,16 +13,10 @@ export const viewport: Viewport = {
   themeColor: '#1a807b',
 };
 
-// Immer Light Mode — Dark Mode komplett deaktiviert
-const themeScript = `(function(){try{localStorage.removeItem('theme');}catch(e){}})();`;
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="de" className={`${sans.variable} ${mono.variable}`} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
-      </head>
-      <body className="font-sans antialiased min-h-screen">{children}</body>
+    <html lang="de" suppressHydrationWarning>
+      <body className="antialiased min-h-screen">{children}</body>
     </html>
   );
 }

@@ -1,14 +1,16 @@
 import { PrismaClient } from '@prisma/client';
 
-// Singleton – wird in Production UND Development im globalen Scope gespeichert,
-// damit keine neue DB-Verbindung pro Request geöffnet wird.
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+declare global {
+  // eslint-disable-next-line no-var
+  var __prisma: PrismaClient | undefined;
+}
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
+function createPrismaClient(): PrismaClient {
+  return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
   });
+}
 
-// Immer cachen – nicht nur in Development!
-globalForPrisma.prisma = prisma;
+// Singleton: eine einzige Instanz für den gesamten Prozess
+export const prisma = global.__prisma ?? createPrismaClient();
+global.__prisma = prisma;
