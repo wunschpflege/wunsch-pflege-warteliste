@@ -50,7 +50,7 @@ export async function createInteressent(_prev: ActionState, fd: FormData): Promi
 
   revalidatePath('/warteliste');
   revalidatePath('/dashboard');
-  redirect(`/warteliste/${created.id}`);
+  redirect('/warteliste');
 }
 
 export async function updateInteressent(id: string, _prev: ActionState, fd: FormData): Promise<ActionState> {
