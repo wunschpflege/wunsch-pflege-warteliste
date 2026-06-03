@@ -66,11 +66,21 @@ export default async function StandortePage({
           </thead>
           <tbody>
             {standorte.map((s) => {
-              const adresse = [s.strasse, s.hausnummer, s.plz, s.ort].filter(Boolean).join(' ');
               return (
                 <tr key={s.id} className="border-b border-[var(--border)] last:border-0">
                   <td className="td font-medium">{s.name}</td>
-                  <td className="td">{adresse || '–'}</td>
+                  <td className="td">
+                    {(s.strasse || s.hausnummer || s.plz || s.ort) ? (
+                      <div className="text-sm leading-snug">
+                        {(s.strasse || s.hausnummer) && (
+                          <p>{[s.strasse, s.hausnummer].filter(Boolean).join(' ')}</p>
+                        )}
+                        {(s.plz || s.ort) && (
+                          <p className="text-muted">{[s.plz, s.ort].filter(Boolean).join(' ')}</p>
+                        )}
+                      </div>
+                    ) : <span className="text-muted">–</span>}
+                  </td>
                   <td className="td">{s._count.interessenten}</td>
                   <td className="td">{s._count.plaetze}</td>
                   <td className="td">
