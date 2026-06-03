@@ -76,7 +76,7 @@ export default function UserFormClient({
       )}
       {!isEdit && (
         <p className="text-xs text-muted">
-          Der Benutzername wird automatisch als <strong>vorname.nachname</strong> vergeben (z. B. Alexander Markus → <strong>alexander.markus</strong>).
+          Der Benutzername wird automatisch als <strong>ersterBuchstabe.nachname</strong> vergeben (z. B. Alexander Markus → <strong>a.markus</strong>).
           Das Mitarbeiterkürzel wird ebenfalls automatisch erzeugt (z. B. → <strong>AM</strong>).
         </p>
       )}
