@@ -10,16 +10,19 @@ interface Props {
   platzAngebotenInfo: string | null;
   platzAngebotenWg: string | null;
   rueckmeldungBis: Date | string | null;
+  standorte: { id: string; name: string }[];
 }
 
 function today() {
   return new Date().toISOString().split('T')[0];
 }
 
-export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebotenInfo, platzAngebotenWg, rueckmeldungBis }: Props) {
+export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebotenInfo, platzAngebotenWg, rueckmeldungBis, standorte }: Props) {
   const [offen, setOffen] = useState(false);
   const [pending, setPending] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const datumRef = useRef<HTMLInputElement>(null);
+  const rueckmeldungRef = useRef<HTMLInputElement>(null);
   const now = new Date();
   const ueberfaellig = rueckmeldungBis && new Date(rueckmeldungBis) < now;
 
@@ -36,11 +39,7 @@ export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebo
   return (
     <div className="relative">
       {platzAngebotenAm ? (
-        <button
-          type="button"
-          onClick={() => setOffen(true)}
-          className="text-left"
-        >
+        <button type="button" onClick={() => setOffen(true)} className="text-left">
           <p className="text-xs font-medium">{fmtDate(new Date(platzAngebotenAm))}</p>
           {platzAngebotenInfo && <p className="text-xs text-muted">{platzAngebotenInfo}</p>}
           {platzAngebotenWg && <p className="text-xs text-muted">{platzAngebotenWg}</p>}
@@ -51,27 +50,25 @@ export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebo
           )}
         </button>
       ) : (
-        <button
-          type="button"
-          onClick={() => setOffen(true)}
-          className="text-xs text-brand-600 hover:underline whitespace-nowrap"
-        >
+        <button type="button" onClick={() => setOffen(true)} className="text-xs text-brand-600 hover:underline whitespace-nowrap">
           + Zimmer anbieten
         </button>
       )}
 
       {offen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setOffen(false)}>
-          <div className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white dark:bg-[#1e1e1e] rounded-2xl shadow-xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
             <h3 className="font-semibold text-base mb-4">Zimmer anbieten</h3>
             <form ref={formRef} onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label className="label">Datum des Angebots</label>
                 <input
+                  ref={datumRef}
                   type="date"
                   name="platzAngebotenAm"
                   defaultValue={platzAngebotenAm ? new Date(platzAngebotenAm).toISOString().split('T')[0] : today()}
-                  className="input"
+                  className="input cursor-pointer"
+                  onClick={() => datumRef.current?.showPicker?.()}
                 />
               </div>
               <div>
@@ -86,21 +83,22 @@ export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebo
               </div>
               <div>
                 <label className="label">Einrichtung / WG</label>
-                <input
-                  type="text"
-                  name="platzAngebotenWg"
-                  defaultValue={platzAngebotenWg ?? ''}
-                  placeholder="z. B. WG Aplerbeck"
-                  className="input"
-                />
+                <select name="platzAngebotenWg" defaultValue={platzAngebotenWg ?? ''} className="select">
+                  <option value="">– bitte wählen –</option>
+                  {standorte.map((s) => (
+                    <option key={s.id} value={s.name}>{s.name}</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="label">Rückmeldung erwünscht bis</label>
                 <input
+                  ref={rueckmeldungRef}
                   type="date"
                   name="rueckmeldungBis"
                   defaultValue={rueckmeldungBis ? new Date(rueckmeldungBis).toISOString().split('T')[0] : ''}
-                  className="input"
+                  className="input cursor-pointer"
+                  onClick={() => rueckmeldungRef.current?.showPicker?.()}
                 />
               </div>
               <div className="flex gap-2 pt-1">

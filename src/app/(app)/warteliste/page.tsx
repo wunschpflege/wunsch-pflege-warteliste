@@ -212,6 +212,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
             sortBy={sortBy}
             sortDir={sortDir}
             baseFilterQs={baseFilterQs}
+            standorte={standorte}
           />
         </>
       )}
@@ -250,6 +251,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
             sortDir={sortDir}
             baseFilterQs="tab=abgelehnt"
             abgelehnt={true}
+            standorte={standorte}
           />
         </>
       )}

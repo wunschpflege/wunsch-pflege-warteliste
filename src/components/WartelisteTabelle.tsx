@@ -43,6 +43,7 @@ interface Props {
   sortDir: string;
   baseFilterQs: string;
   abgelehnt?: boolean;
+  standorte?: { id: string; name: string }[];
 }
 
 const PRIO_DOT: Record<string, string> = {
@@ -86,7 +87,7 @@ function WgChips({ standorte }: { standorte: { name: string }[] }) {
   );
 }
 
-export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sortBy, sortDir, baseFilterQs, abgelehnt }: Props) {
+export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sortBy, sortDir, baseFilterQs, abgelehnt, standorte = [] }: Props) {
   const [ausgewaehlt, setAusgewaehlt] = useState<Set<string>>(new Set());
   const [bulkStatus, setBulkStatus] = useState('');
   const [bulkPending, setBulkPending] = useState(false);
@@ -207,6 +208,7 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
                             letzterKontakt={i.letzterKontakt}
                             platzAngebotenWg={i.platzAngebotenWg}
                             platzAngebotenInfo={i.platzAngebotenInfo}
+                            standorte={standorte}
                           />
                         : <span className={kontaktAlt ? 'text-orange-600 font-medium' : 'text-muted'}>
                             {letzterKontakt ? fmtDate(letzterKontakt) : '–'}
@@ -217,7 +219,7 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
                   {!abgelehnt && (
                     <td className="td py-3">
                       {canUpdate
-                        ? <ZimmerAngebotenModal id={i.id} platzAngebotenAm={i.platzAngebotenAm} platzAngebotenInfo={i.platzAngebotenInfo} platzAngebotenWg={i.platzAngebotenWg} rueckmeldungBis={i.rueckmeldungBis} />
+                        ? <ZimmerAngebotenModal id={i.id} platzAngebotenAm={i.platzAngebotenAm} platzAngebotenInfo={i.platzAngebotenInfo} platzAngebotenWg={i.platzAngebotenWg} rueckmeldungBis={i.rueckmeldungBis} standorte={standorte} />
                         : i.platzAngebotenAm
                           ? <div>
                               <p className="text-xs font-medium">{fmtDate(new Date(i.platzAngebotenAm))}</p>

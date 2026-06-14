@@ -9,13 +9,14 @@ interface Props {
   letzterKontakt: Date | string | null;
   platzAngebotenWg: string | null;
   platzAngebotenInfo: string | null;
+  standorte: { id: string; name: string }[];
 }
 
 function heute() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export default function KontaktModal({ id, letzterKontakt, platzAngebotenWg, platzAngebotenInfo }: Props) {
+export default function KontaktModal({ id, letzterKontakt, platzAngebotenWg, platzAngebotenInfo, standorte }: Props) {
   const [offen, setOffen] = useState(false);
   const [pending, setPending] = useState(false);
   const datumRef = useRef<HTMLInputElement>(null);
@@ -36,7 +37,6 @@ export default function KontaktModal({ id, letzterKontakt, platzAngebotenWg, pla
 
   return (
     <>
-      {/* Trigger */}
       <button
         type="button"
         onClick={() => setOffen(true)}
@@ -49,7 +49,6 @@ export default function KontaktModal({ id, letzterKontakt, platzAngebotenWg, pla
         )}
       </button>
 
-      {/* Modal */}
       {offen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOffen(false)} />
@@ -75,13 +74,12 @@ export default function KontaktModal({ id, letzterKontakt, platzAngebotenWg, pla
                 <div className="space-y-2">
                   <div>
                     <label className="label text-xs">Einrichtung / WG</label>
-                    <input
-                      type="text"
-                      name="platzAngebotenWg"
-                      defaultValue={platzAngebotenWg ?? ''}
-                      placeholder="z. B. WG Aplerbeck"
-                      className="input"
-                    />
+                    <select name="platzAngebotenWg" defaultValue={platzAngebotenWg ?? ''} className="select">
+                      <option value="">– keine Angabe –</option>
+                      {standorte.map((s) => (
+                        <option key={s.id} value={s.name}>{s.name}</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="label text-xs">Zimmer von Bewohnerin/Bewohner</label>
