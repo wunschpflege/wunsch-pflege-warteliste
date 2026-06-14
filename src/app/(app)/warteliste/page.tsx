@@ -76,7 +76,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
     const safeSortBy: SortField = (allowedSortFields as readonly string[]).includes(sortBy) ? sortBy as SortField : 'createdAt';
     eintraege = await prisma.interessent.findMany({
       where,
-      include: { standort: true, erstelltVon: true },
+      include: { standort: true, erstelltVon: true, wunschStandorte: true },
       orderBy: [{ [safeSortBy]: sortDir }],
       take: 300,
     }) as InteressentMitRelationen[];
@@ -190,6 +190,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
               platzAngebotenWg: (i as any).platzAngebotenWg ?? null,
               rueckmeldungBis: (i as any).rueckmeldungBis ?? null,
               standort: i.standort ?? null,
+              wunschStandorte: (i as any).wunschStandorte ?? [],
               erstelltVon: i.erstelltVon,
             }))}
             canUpdate={can(user, 'interessent.update')}

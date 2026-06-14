@@ -30,6 +30,7 @@ interface Eintrag {
   platzAngebotenWg: string | null;
   rueckmeldungBis: Date | string | null;
   standort: { name: string } | null;
+  wunschStandorte: { name: string }[];
   erstelltVon: { kuerzel: string };
 }
 
@@ -99,7 +100,7 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
               </th>
               <th className="th">Angehöriger</th>
               <th className="th">Pflegegrad</th>
-              <th className="th">Standort</th>
+              <th className="th">Gewünschte WG/Wohnung</th>
               <th className="th">Letzter Kontakt</th>
               <th className="th">Zimmer angeboten</th>
               <th className="th">
@@ -156,7 +157,11 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
                       : '–'}
                   </td>
                   <td className="td whitespace-nowrap">{PFLEGEGRAD_LABEL[i.pflegegrad as keyof typeof PFLEGEGRAD_LABEL]}</td>
-                  <td className="td whitespace-nowrap">{i.standort?.name ?? '–'}</td>
+                  <td className="td text-sm">
+                    {i.wunschStandorte.length > 0
+                      ? <div className="space-y-0.5">{i.wunschStandorte.map((s) => <p key={s.name} className="whitespace-nowrap">{s.name}</p>)}</div>
+                      : <span className="text-muted">–</span>}
+                  </td>
                   <td className="td text-sm whitespace-nowrap">
                     <span className={kontaktAlt ? 'text-orange-600 font-medium' : ''}>
                       {letzterKontakt ? fmtDate(letzterKontakt) : '–'}
