@@ -53,6 +53,8 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
   if (tab === 'interessenten') {
     const where: Prisma.InteressentWhereInput = {};
     const and: Prisma.InteressentWhereInput[] = [];
+    // Exclude ABGELEHNT/ARCHIVIERT unless user explicitly filters for them
+    if (!sp.status) and.push({ status: { notIn: ['ABGELEHNT', 'ARCHIVIERT'] as never[] } });
     if (q) and.push({ OR: [
       { vorname: { contains: q, mode: 'insensitive' } },
       { nachname: { contains: q, mode: 'insensitive' } },
@@ -78,6 +80,17 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
       where,
       include: { standort: true, erstelltVon: true, wunschStandorte: true },
       orderBy: [{ [safeSortBy]: sortDir }],
+      take: 300,
+    }) as InteressentMitRelationen[];
+  }
+
+  // ── Tab: Abgelehnt ────────────────────────────────────────────
+  let abgelehntEintraege: InteressentMitRelationen[] = [];
+  if (tab === 'abgelehnt') {
+    abgelehntEintraege = await prisma.interessent.findMany({
+      where: { status: 'ABGELEHNT' as never },
+      include: { standort: true, erstelltVon: true, wunschStandorte: true },
+      orderBy: [{ updatedAt: 'desc' }],
       take: 300,
     }) as InteressentMitRelationen[];
   }
@@ -118,6 +131,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
 
   const tabs = [
     { key: 'interessenten', label: 'Interessenten' },
+    { key: 'abgelehnt', label: 'Abgelehnt' },
     ...(can(user, 'wiedervorlage.manage') ? [{ key: 'wiedervorlagen', label: 'Wiedervorlagen' }] : []),
   ];
 
@@ -198,6 +212,44 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
             sortBy={sortBy}
             sortDir={sortDir}
             baseFilterQs={baseFilterQs}
+          />
+        </>
+      )}
+
+      {/* ── TAB: ABGELEHNT ────────────────────────────────────── */}
+      {tab === 'abgelehnt' && (
+        <>
+          <p className="text-sm text-muted">{abgelehntEintraege.length} Einträge</p>
+          <WartelisteTabelle
+            eintraege={abgelehntEintraege.map((i) => ({
+              id: i.id,
+              vorname: i.vorname,
+              nachname: i.nachname,
+              pflegegrad: i.pflegegrad,
+              prioritaet: i.prioritaet,
+              status: i.status,
+              createdAt: i.createdAt,
+              letzterKontakt: (i as any).letzterKontakt ?? null,
+              schnellnotiz: (i as any).schnellnotiz ?? null,
+              markiert: (i as any).markiert ?? false,
+              telefonMobil: i.telefonMobil ?? null,
+              telefonFestnetz: i.telefonFestnetz ?? null,
+              angehoerigerVorname: i.angehoerigerVorname ?? null,
+              angehoerigerNachname: i.angehoerigerNachname ?? null,
+              platzAngebotenAm: (i as any).platzAngebotenAm ?? null,
+              platzAngebotenInfo: (i as any).platzAngebotenInfo ?? null,
+              platzAngebotenWg: (i as any).platzAngebotenWg ?? null,
+              rueckmeldungBis: (i as any).rueckmeldungBis ?? null,
+              standort: i.standort ?? null,
+              wunschStandorte: (i as any).wunschStandorte ?? [],
+              erstelltVon: i.erstelltVon,
+            }))}
+            canUpdate={can(user, 'interessent.update')}
+            canDelete={can(user, 'interessent.delete')}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            baseFilterQs="tab=abgelehnt"
+            abgelehnt={true}
           />
         </>
       )}
