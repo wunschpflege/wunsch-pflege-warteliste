@@ -53,7 +53,7 @@ function LoginForm() {
           className="input"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="vorname.nachname"
+          placeholder="m.mustermann"
         />
       </div>
       <div>
