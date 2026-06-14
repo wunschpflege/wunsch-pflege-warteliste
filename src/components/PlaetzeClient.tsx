@@ -18,6 +18,21 @@ interface Standort {
   name: string;
 }
 
+const WG_FARBEN = [
+  'bg-red-400',
+  'bg-orange-400',
+  'bg-amber-400',
+  'bg-yellow-400',
+  'bg-lime-500',
+  'bg-green-500',
+  'bg-teal-500',
+  'bg-cyan-500',
+  'bg-blue-500',
+  'bg-indigo-500',
+  'bg-violet-500',
+  'bg-pink-500',
+];
+
 interface Props {
   standorte: Standort[];
   plaetze: Platz[];
@@ -80,6 +95,7 @@ export default function PlaetzeClient({ standorte, plaetze, canManage }: Props) 
         const freiCount = zimmer.filter((z) => !z.belegt).length;
         const istOffen = offen.has(s.id);
         const addIstOffen = addOffen.has(s.id);
+        const wgFarbe = WG_FARBEN[standorte.indexOf(s) % WG_FARBEN.length];
 
         return (
           <div key={s.id} className="card overflow-hidden">
@@ -90,7 +106,7 @@ export default function PlaetzeClient({ standorte, plaetze, canManage }: Props) 
               className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className={`h-2.5 w-2.5 rounded-full flex-shrink-0 ${freiCount > 0 ? 'bg-green-500' : 'bg-gray-300'}`} />
+                <span className={`h-3 w-3 rounded-full flex-shrink-0 ${wgFarbe}`} />
                 <span className="font-semibold">{s.name}</span>
                 <span className="text-sm text-muted">{zimmer.length} Zimmer</span>
               </div>

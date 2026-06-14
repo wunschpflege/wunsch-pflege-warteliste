@@ -7,8 +7,8 @@ import {
   GESCHLECHT_LABEL, WV_TYP_LABEL, fmtDate,
 } from '@/lib/labels';
 import type { Prisma } from '@prisma/client';
-import SuchverlaufInput from '@/components/SuchverlaufInput';
 import WartelisteTabelle from '@/components/WartelisteTabelle';
+import WartelisteSuche from '@/components/WartelisteSuche';
 
 type InteressentMitRelationen = Prisma.InteressentGetPayload<{
   include: { standort: true; erstelltVon: true };
@@ -160,60 +160,12 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
       {/* ── TAB: INTERESSENTEN ─────────────────────────────────── */}
       {tab === 'interessenten' && (
         <>
-          <form className="card p-4 grid md:grid-cols-3 lg:grid-cols-4 gap-3" method="get">
-            <input type="hidden" name="tab" value="interessenten" />
-            <div className="lg:col-span-2">
-              <label className="label">Suche (Name, Telefon, Angehörige)</label>
-              <SuchverlaufInput name="q" defaultValue={q} placeholder="z. B. Müller oder 0231…" />
-            </div>
-            <div>
-              <label className="label">Standort</label>
-              <select name="standort" defaultValue={sp.standort ?? ''} className="select">
-                <option value="">Alle</option>
-                {standorte.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label">Status</label>
-              <select name="status" defaultValue={sp.status ?? ''} className="select">
-                <option value="">Alle</option>
-                {Object.entries(STATUS_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label">Pflegegrad</label>
-              <select name="pflegegrad" defaultValue={sp.pflegegrad ?? ''} className="select">
-                <option value="">Alle</option>
-                {Object.entries(PFLEGEGRAD_LABEL).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label">Mitarbeiter</label>
-              <select name="mitarbeiter" defaultValue={sp.mitarbeiter ?? ''} className="select">
-                <option value="">Alle</option>
-                {mitarbeiter.map((m) => <option key={m.id} value={m.id}>{m.kuerzel} – {m.vorname} {m.nachname}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="label">Von</label>
-              <input type="date" name="von" defaultValue={sp.von ?? ''} className="input" />
-            </div>
-            <div>
-              <label className="label">Bis</label>
-              <input type="date" name="bis" defaultValue={sp.bis ?? ''} className="input" />
-            </div>
-            <div>
-              <label className="label">&nbsp;</label>
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input type="checkbox" name="markiert" value="1" defaultChecked={nurMarkierte} className="h-4 w-4 accent-brand-600" />
-                Nur markierte ⭐
-              </label>
-            </div>
-            <div className="flex items-end gap-2">
-              <button className="btn-primary flex-1" type="submit">Filtern</button>
-              <Link href="/warteliste?tab=interessenten" className="btn-ghost">Reset</Link>
-            </div>
-          </form>
+          <WartelisteSuche
+            standorte={standorte}
+            mitarbeiter={mitarbeiter.map((m) => ({ id: m.id, kuerzel: m.kuerzel, vorname: m.vorname, nachname: m.nachname }))}
+            defaults={{ q: sp.q ?? '', standort: sp.standort ?? '', status: sp.status ?? '', pflegegrad: sp.pflegegrad ?? '', mitarbeiter: sp.mitarbeiter ?? '', von: sp.von ?? '', bis: sp.bis ?? '' }}
+            nurMarkierte={nurMarkierte}
+          />
 
           <p className="text-sm text-muted">{eintraege.length} Einträge</p>
 

@@ -44,12 +44,25 @@ export default async function BenutzerPage({
           }}
         />
       ) : (
-        <UserFormClient
-          action={saveUser.bind(null, null)}
-          title="Neuen Benutzer anlegen"
-          submitLabel="Anlegen"
-          resetOnSuccess
-        />
+        <details className="group card overflow-hidden">
+          <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors list-none">
+            <div className="flex items-center gap-3">
+              <span className="h-8 w-8 rounded-lg bg-brand-100 text-brand-700 grid place-items-center text-lg font-bold">+</span>
+              <span className="font-semibold">Neuen Benutzer anlegen</span>
+            </div>
+            <svg className="h-4 w-4 text-muted transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div className="border-t border-[var(--border)] px-5 pb-5 pt-4">
+            <UserFormClient
+              action={saveUser.bind(null, null)}
+              title=""
+              submitLabel="Anlegen"
+              resetOnSuccess
+            />
+          </div>
+        </details>
       )}
 
       <div className="card overflow-x-auto">
