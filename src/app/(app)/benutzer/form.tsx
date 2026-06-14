@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useRef, useEffect } from 'react';
+import { useActionState, useRef, useEffect, useState } from 'react';
 import { ROLE_LABEL } from '@/lib/rbac';
 
 type State = { ok: boolean; error?: string };
@@ -30,9 +30,19 @@ export default function UserFormClient({
 }) {
   const [state, formAction, pending] = useActionState(action, init);
   const ref = useRef<HTMLFormElement>(null);
+  const [vorname, setVorname] = useState(defaults?.vorname ?? '');
+  const [nachname, setNachname] = useState(defaults?.nachname ?? '');
+
+  const usernameVorschau = vorname && nachname
+    ? `${vorname.trim()[0].toLowerCase()}.${nachname.trim().toLowerCase()}`
+    : '';
 
   useEffect(() => {
-    if (state.ok && resetOnSuccess) ref.current?.reset();
+    if (state.ok && resetOnSuccess) {
+      ref.current?.reset();
+      setVorname('');
+      setNachname('');
+    }
   }, [state.ok, resetOnSuccess]);
 
   return (
@@ -41,11 +51,11 @@ export default function UserFormClient({
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="label">Vorname *</label>
-          <input name="vorname" className="input" required defaultValue={defaults?.vorname ?? ''} />
+          <input name="vorname" className="input" required value={vorname} onChange={(e) => setVorname(e.target.value)} />
         </div>
         <div>
           <label className="label">Nachname *</label>
-          <input name="nachname" className="input" required defaultValue={defaults?.nachname ?? ''} />
+          <input name="nachname" className="input" required value={nachname} onChange={(e) => setNachname(e.target.value)} />
         </div>
         <div>
           <label className="label">Rolle *</label>
@@ -69,15 +79,25 @@ export default function UserFormClient({
           />
         </div>
       </div>
-      {defaults?.username && (
+      {!isEdit && usernameVorschau && (
+        <div>
+          <label className="label">Benutzername (Vorschau)</label>
+          <input
+            className="input bg-gray-50 text-gray-400 cursor-default"
+            value={usernameVorschau}
+            readOnly
+            tabIndex={-1}
+          />
+        </div>
+      )}
+      {defaults?.username && isEdit && (
         <p className="text-xs text-muted">
           Benutzername: <strong>{defaults.username}</strong>
         </p>
       )}
-      {!isEdit && (
+      {!isEdit && !usernameVorschau && (
         <p className="text-xs text-muted">
           Der Benutzername wird automatisch als <strong>ersterBuchstabe.nachname</strong> vergeben (z. B. Alexander Markus → <strong>a.markus</strong>).
-          Das Mitarbeiterkürzel wird ebenfalls automatisch erzeugt (z. B. → <strong>AM</strong>).
         </p>
       )}
       {state.error && <p className="text-sm text-red-600">{state.error}</p>}
