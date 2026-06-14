@@ -18,7 +18,7 @@ export default async function PlaetzePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Freie Plätze</h1>
+      <h1 className="text-2xl font-semibold">Unsere Häuser</h1>
       <PlaetzeClient
         standorte={standorte}
         plaetze={plaetze.map((p) => ({
