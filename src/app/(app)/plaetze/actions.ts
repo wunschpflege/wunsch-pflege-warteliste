@@ -46,3 +46,60 @@ export async function deletePlatz(id: string): Promise<void> {
   await audit(user, 'DELETE', 'Platz', id);
   revalidatePath('/plaetze');
 }
+
+export async function platzBelegen(id: string, fd: FormData): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'platz.manage');
+  const name = fd.get('bewohnerName') as string;
+  const seit = fd.get('belegtSeit') as string;
+  await prisma.platz.update({
+    where: { id },
+    data: {
+      belegt: true,
+      bewohnerName: name || null,
+      belegtSeit: seit ? new Date(seit) : new Date(),
+    } as never,
+  });
+  revalidatePath('/plaetze');
+  revalidatePath('/dashboard');
+}
+
+export async function platzFreigeben(id: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'platz.manage');
+  await prisma.platz.update({
+    where: { id },
+    data: { belegt: false, bewohnerName: null, belegtSeit: null } as never,
+  });
+  revalidatePath('/plaetze');
+  revalidatePath('/dashboard');
+}
+
+export async function platzAnlegen(fd: FormData): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'platz.manage');
+  const standortId = fd.get('standortId') as string;
+  const zimmernummer = fd.get('zimmernummer') as string;
+  const bewohnerName = fd.get('bewohnerName') as string;
+  const belegtSeit = fd.get('belegtSeit') as string;
+  const belegt = !!bewohnerName;
+  await prisma.platz.create({
+    data: {
+      standortId,
+      zimmernummer: zimmernummer || '-',
+      belegt,
+      bewohnerName: bewohnerName || null,
+      belegtSeit: belegtSeit ? new Date(belegtSeit) : belegt ? new Date() : null,
+    } as never,
+  });
+  revalidatePath('/plaetze');
+  revalidatePath('/dashboard');
+}
+
+export async function platzLoeschen(id: string): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'platz.manage');
+  await prisma.platz.delete({ where: { id } });
+  revalidatePath('/plaetze');
+  revalidatePath('/dashboard');
+}

@@ -19,7 +19,7 @@ function StatCard({ label, value, href, accent }: { label: string; value: number
 export default async function Dashboard() {
   const user = await getSession();
   const now = new Date();
-  const weekAgo = new Date(Date.now() - 7 * 86_400_000);
+  const weekAgo = new Date(Date.now() - 5 * 86_400_000);
   const in7 = new Date(Date.now() + 7 * 86_400_000);
 
   const aktiveStatus = ['NEUE_ANFRAGE', 'WARTELISTE', 'BESICHTIGUNG_GEPLANT', 'AUFNAHME_IN_VORBEREITUNG', 'PLATZ_ANGEBOTEN'] as const;
@@ -77,28 +77,28 @@ export default async function Dashboard() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Freie WG-Plätze" value={freiePlaetze} href="/plaetze" accent="text-brand-600" />
-        <StatCard label="Auf der Warteliste" value={warteliste} href="/warteliste" />
-        <StatCard label="Neu (7 Tage)" value={neueWoche} href="/warteliste" />
-        <StatCard label="Aktuelle Rückrufe" value={rueckrufe} href="/wiedervorlagen" accent="text-amber-600" />
+      <div className="grid grid-cols-2 gap-4">
+        <StatCard label="Aktiv auf der Warteliste" value={warteliste} href="/warteliste" />
+        <StatCard label="Neu (5 Tage)" value={neueWoche} href="/warteliste" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Freie Plätze nach Standort */}
         <section className="card p-5">
-          <h2 className="font-semibold mb-3">Freie Plätze nach Standort</h2>
-          <div className="space-y-1.5">
-            {standorte.map((s) => (
-              <div key={s.id} className="flex items-center justify-between text-sm py-1 border-b border-[var(--border)] last:border-0">
-                <span>{s.name}</span>
-                <span className={`badge ${(freiMap.get(s.id) ?? 0) > 0 ? 'bg-brand-100 text-brand-800' : 'bg-gray-100 text-gray-500'}`}>
-                  {freiMap.get(s.id) ?? 0} frei
-                </span>
-              </div>
-            ))}
-            {standorte.length === 0 && <p className="text-sm text-muted">Keine Standorte angelegt.</p>}
-          </div>
+          <details>
+            <summary className="font-semibold cursor-pointer select-none">Freie Plätze nach Standort</summary>
+            <div className="space-y-1.5 mt-3">
+              {standorte.map((s) => (
+                <div key={s.id} className="flex items-center justify-between text-sm py-1 border-b border-[var(--border)] last:border-0">
+                  <span>{s.name}</span>
+                  <span className={`badge ${(freiMap.get(s.id) ?? 0) > 0 ? 'bg-brand-100 text-brand-800' : 'bg-gray-100 text-gray-500'}`}>
+                    {freiMap.get(s.id) ?? 0} frei
+                  </span>
+                </div>
+              ))}
+              {standorte.length === 0 && <p className="text-sm text-muted">Keine Standorte angelegt.</p>}
+            </div>
+          </details>
         </section>
 
         {/* Anstehende Wiedervorlagen */}
@@ -144,7 +144,7 @@ export default async function Dashboard() {
                 <span className={`badge ${STATUS_COLOR[i.status]}`}>{STATUS_LABEL[i.status]}</span>
               </Link>
             ))}
-            {neuListe.length === 0 && <p className="text-sm text-muted">Keine neuen Einträge in den letzten 7 Tagen.</p>}
+            {neuListe.length === 0 && <p className="text-sm text-muted">Keine neuen Einträge in den letzten 5 Tagen.</p>}
           </div>
         </section>
 

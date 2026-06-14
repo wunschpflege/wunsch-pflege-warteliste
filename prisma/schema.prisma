@@ -190,6 +190,8 @@ model Platz {
   geschlechtPref  Geschlecht  @default(EGAL)
   belegt          Boolean     @default(false)
   bemerkungen     String?
+  bewohnerName    String?
+  belegtSeit      DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
