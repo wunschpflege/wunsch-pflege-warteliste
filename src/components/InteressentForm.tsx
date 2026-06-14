@@ -70,12 +70,10 @@ export default function InteressentForm({
           <Field name="nachname" label="Nachname *" defaultValue={data?.nachname} error={fe.nachname} />
           <Field name="geburtsdatum" label="Geburtsdatum" type="date" defaultValue={fmtDateInput(data?.geburtsdatum)} />
           <Field name="pflegegrad" label="Pflegegrad" defaultValue={data?.pflegegrad ?? 'KEINER'} options={pgOpts} />
-          <Field name="krankenkasse" label="Krankenkasse" defaultValue={data?.krankenkasse} />
           <Field name="gewuenschterEinzug" label="Gewünschter Einzugstermin" type="date" defaultValue={fmtDateInput(data?.gewuenschterEinzug)} />
           <Field name="wohnsituation" label="Aktuelle Wohnsituation" defaultValue={data?.wohnsituation} full />
           <Field name="diagnosen" label="Diagnosen" defaultValue={data?.diagnosen} rows={2} full />
-          <Field name="mobilitaet" label="Mobilität" defaultValue={data?.mobilitaet} />
-          <Field name="besonderheiten" label="Besonderheiten" defaultValue={data?.besonderheiten} />
+          <Field name="mobilitaet" label="Mobilität" defaultValue={data?.mobilitaet} full />
           <Field name="bemerkungen" label="Bemerkungen" defaultValue={data?.bemerkungen} rows={3} full />
           <Field name="schnellnotiz" label="Schnellnotiz (sichtbar in der Liste)" defaultValue={(data as any)?.schnellnotiz} full />
           <Field name="letzterKontakt" label="Letzter Kontakt" type="date" defaultValue={fmtDateInput((data as any)?.letzterKontakt)} />
@@ -115,20 +113,6 @@ export default function InteressentForm({
         <div className="grid sm:grid-cols-2 gap-4">
           <Field name="status" label="Status" defaultValue={data?.status ?? 'NEUE_ANFRAGE'} options={statusOpts} />
           <Field name="prioritaet" label="Priorität" defaultValue={data?.prioritaet ?? 'NORMAL'} options={prioOpts} />
-
-          {/* Zimmer angeboten */}
-          <div className="sm:col-span-2">
-            <label className="label">Zimmer angeboten am</label>
-            <DateInput name="platzAngebotenAm" defaultValue={fmtDateInput(data?.platzAngebotenAm)} />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="label">Zimmer frei von</label>
-            <input name="platzAngebotenInfo" className="input" defaultValue={data?.platzAngebotenInfo ?? ''} placeholder="z. B. Frau Meier" />
-          </div>
-          <div className="sm:col-span-2">
-            <label className="label">Rückmeldung erwünscht bis</label>
-            <DateInput name="rueckmeldungBis" defaultValue={fmtDateInput(data?.rueckmeldungBis)} />
-          </div>
 
           {/* Gewünschte Standorte – Mehrfachauswahl */}
           <div className="sm:col-span-2">

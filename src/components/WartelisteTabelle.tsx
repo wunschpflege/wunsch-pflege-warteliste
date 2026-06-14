@@ -6,6 +6,7 @@ import { STATUS_LABEL, STATUS_COLOR, PFLEGEGRAD_LABEL, PRIO_LABEL, fmtDate } fro
 import SchnellStatusSelect from './SchnellStatusSelect';
 import SortHeader from './SortHeader';
 import { toggleMarkiert, bulkStatusAendern, deleteInteressent } from '@/app/(app)/warteliste/actions';
+import ZimmerAngebotenModal from './ZimmerAngebotenModal';
 
 const statusOptions = Object.entries(STATUS_LABEL) as [string, string][];
 
@@ -112,7 +113,6 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
               const wartetage = Math.floor((now.getTime() - new Date(i.createdAt).getTime()) / 86_400_000);
               const zeilenKlasse = wartetage >= 90 ? 'border-l-4 border-l-red-500 bg-red-50' :
                                    wartetage >= 60 ? 'border-l-4 border-l-amber-400 bg-amber-50' : '';
-              const rueckmeldungUeberfaellig = i.rueckmeldungBis && new Date(i.rueckmeldungBis) < now;
               const letzterKontakt = i.letzterKontakt ? new Date(i.letzterKontakt) : null;
               const kontaktAlt = letzterKontakt && Math.floor((now.getTime() - letzterKontakt.getTime()) / 86_400_000) > 30;
               const prioPunkt: Record<string, string> = {
@@ -163,17 +163,15 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
                     </span>
                   </td>
                   <td className="td text-sm">
-                    {i.platzAngebotenAm ? (
-                      <div>
-                        <p className="text-xs font-medium">{fmtDate(new Date(i.platzAngebotenAm))}</p>
-                        {i.platzAngebotenInfo && <p className="text-xs text-muted">{i.platzAngebotenInfo}</p>}
-                        {i.rueckmeldungBis && (
-                          <p className={`text-xs font-medium ${rueckmeldungUeberfaellig ? 'text-red-600' : 'text-amber-600'}`}>
-                            {rueckmeldungUeberfaellig ? '⚠ Überfällig' : '⏳'} bis {fmtDate(new Date(i.rueckmeldungBis))}
-                          </p>
-                        )}
-                      </div>
-                    ) : '–'}
+                    {canUpdate
+                      ? <ZimmerAngebotenModal id={i.id} platzAngebotenAm={i.platzAngebotenAm} platzAngebotenInfo={i.platzAngebotenInfo} rueckmeldungBis={i.rueckmeldungBis} />
+                      : i.platzAngebotenAm
+                        ? <div>
+                            <p className="text-xs font-medium">{fmtDate(new Date(i.platzAngebotenAm))}</p>
+                            {i.platzAngebotenInfo && <p className="text-xs text-muted">{i.platzAngebotenInfo}</p>}
+                          </div>
+                        : '–'
+                    }
                   </td>
                   <td className="td">
                     {canUpdate

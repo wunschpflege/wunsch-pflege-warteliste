@@ -186,6 +186,25 @@ export async function toggleMarkiert(id: string): Promise<void> {
   revalidatePath('/warteliste');
 }
 
+export async function zimmerAnbieten(id: string, fd: FormData): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'interessent.update');
+  const datum = fd.get('platzAngebotenAm') as string | null;
+  const info = fd.get('platzAngebotenInfo') as string | null;
+  const rueckmeldung = fd.get('rueckmeldungBis') as string | null;
+  await prisma.interessent.update({
+    where: { id },
+    data: {
+      platzAngebotenAm: datum ? new Date(datum) : null,
+      platzAngebotenInfo: info || null,
+      rueckmeldungBis: rueckmeldung ? new Date(rueckmeldung) : null,
+    },
+  });
+  const i = await prisma.interessent.findUnique({ where: { id } });
+  if (i) await logHistorie(id, user, `Zimmer angeboten: ${info ?? ''} am ${datum ?? ''}`);
+  revalidatePath('/warteliste');
+}
+
 export async function bulkStatusAendern(ids: string[], status: string): Promise<void> {
   const user = await requireUser();
   requirePermission(user, 'interessent.update');
