@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { platzBelegen, platzFreigeben, platzAnlegen, platzLoeschen } from '@/app/(app)/plaetze/actions';
+import { platzBelegen, platzAnlegen, platzLoeschen } from '@/app/(app)/plaetze/actions';
 import { fmtDate } from '@/lib/labels';
+import FreigebenModal from './FreigebenModal';
 
 interface Platz {
   id: string;
@@ -62,12 +63,6 @@ export default function PlaetzeClient({ standorte, plaetze, canManage }: Props) 
     setPending(platzId);
     const fd = new FormData(e.currentTarget);
     await platzBelegen(platzId, fd);
-    setPending(null);
-  }
-
-  async function handleFreigeben(platzId: string) {
-    setPending(platzId);
-    await platzFreigeben(platzId);
     setPending(null);
   }
 
@@ -156,14 +151,7 @@ export default function PlaetzeClient({ standorte, plaetze, canManage }: Props) 
                       {canManage && (
                         <div className="flex items-center gap-2 flex-wrap">
                           {z.belegt ? (
-                            <button
-                              type="button"
-                              disabled={pending === z.id}
-                              onClick={() => handleFreigeben(z.id)}
-                              className="text-xs px-3 py-1.5 rounded-lg border border-orange-300 text-orange-700 hover:bg-orange-50 disabled:opacity-50"
-                            >
-                              {pending === z.id ? '…' : 'Verstorben / ausgezogen'}
-                            </button>
+                            <FreigebenModal platzId={z.id} />
                           ) : (
                             <form onSubmit={(e) => handleBelegen(z.id, e)} className="flex items-center gap-2">
                               <input name="bewohnerName" className="input text-sm py-1 w-32" placeholder="Bewohnername" required />

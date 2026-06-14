@@ -64,14 +64,31 @@ export async function platzBelegen(id: string, fd: FormData): Promise<void> {
   revalidatePath('/dashboard');
 }
 
-export async function platzFreigeben(id: string): Promise<void> {
+export async function platzFreigeben(id: string, fd: FormData): Promise<void> {
   const user = await requireUser();
   requirePermission(user, 'platz.manage');
+  const platz = await prisma.platz.findUnique({ where: { id } });
+  if (!platz) return;
+  const auszugAm = fd.get('auszugAm') as string;
+  const auszugGrund = fd.get('auszugGrund') as string;
+  const bemerkung = fd.get('bemerkung') as string;
+  // Archiv-Eintrag anlegen
+  await (prisma as any).bewohnerArchiv.create({
+    data: {
+      standortId: platz.standortId,
+      bewohnerName: (platz as any).bewohnerName ?? 'Unbekannt',
+      belegtSeit: (platz as any).belegtSeit ?? null,
+      auszugAm: auszugAm ? new Date(auszugAm) : new Date(),
+      auszugGrund: auszugGrund || 'AUSGEZOGEN',
+      bemerkung: bemerkung || null,
+    },
+  });
   await prisma.platz.update({
     where: { id },
     data: { belegt: false, bewohnerName: null, belegtSeit: null } as never,
   });
   revalidatePath('/plaetze');
+  revalidatePath('/archiv');
   revalidatePath('/dashboard');
 }
 

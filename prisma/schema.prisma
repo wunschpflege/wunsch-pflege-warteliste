@@ -102,6 +102,19 @@ model Standort {
   interessenten       Interessent[] @relation("AktuellerStandort")
   wunschInteressenten Interessent[] @relation("WunschStandorte")
   plaetze             Platz[]
+  bewohnerArchiv      BewohnerArchiv[]
+}
+
+model BewohnerArchiv {
+  id           String    @id @default(cuid())
+  standortId   String
+  standort     Standort  @relation(fields: [standortId], references: [id])
+  bewohnerName String
+  belegtSeit   DateTime?
+  auszugAm     DateTime
+  auszugGrund  String
+  bemerkung    String?
+  createdAt    DateTime  @default(now())
 }
 
 model Interessent {
