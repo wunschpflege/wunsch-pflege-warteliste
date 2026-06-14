@@ -1,0 +1,1 @@
+ALTER TABLE "Standort" ADD COLUMN IF NOT EXISTS "gesamtplaetze" INTEGER;

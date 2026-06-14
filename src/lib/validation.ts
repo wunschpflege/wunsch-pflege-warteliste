@@ -57,6 +57,7 @@ export const standortSchema = z.object({
   plz: optStr,
   ort: optStr,
   bemerkungen: optStr,
+  gesamtplaetze: z.coerce.number().int().min(0).nullish().transform((v) => v ?? null),
   aktiv: z.coerce.boolean().default(true),
 });
 

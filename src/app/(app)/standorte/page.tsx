@@ -58,6 +58,7 @@ export default async function StandortePage({
             plz: editStandort.plz ?? '',
             ort: editStandort.ort ?? '',
             bemerkungen: editStandort.bemerkungen ?? '',
+            gesamtplaetze: (editStandort as any).gesamtplaetze ?? null,
             aktiv: editStandort.aktiv,
           }}
         />
@@ -119,21 +120,26 @@ export default async function StandortePage({
                   </td>
                   <td className="td">{s._count.interessenten}</td>
                   <td className="td">
-                    {gesamt > 0 ? (
-                      <div className="flex items-center gap-2 text-sm">
-                        <span className="inline-flex items-center gap-1 text-green-700 font-medium">
-                          <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
-                          {pz.frei} frei
-                        </span>
-                        <span className="text-muted">·</span>
-                        <span className="inline-flex items-center gap-1 text-gray-500">
-                          <span className="h-1.5 w-1.5 rounded-full bg-gray-400 inline-block" />
-                          {pz.belegt} belegt
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-muted text-sm">–</span>
-                    )}
+                    <div className="text-sm space-y-0.5">
+                      {(s as any).gesamtplaetze != null && (
+                        <p className="font-medium">{(s as any).gesamtplaetze} Plätze gesamt</p>
+                      )}
+                      {gesamt > 0 ? (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 text-green-700">
+                            <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
+                            {pz.frei} frei
+                          </span>
+                          <span className="text-muted">·</span>
+                          <span className="inline-flex items-center gap-1 text-gray-500">
+                            <span className="h-1.5 w-1.5 rounded-full bg-gray-400 inline-block" />
+                            {pz.belegt} belegt
+                          </span>
+                        </div>
+                      ) : (s as any).gesamtplaetze == null ? (
+                        <span className="text-muted">–</span>
+                      ) : null}
+                    </div>
                   </td>
                   <td className="td">
                     <span className={`badge ${s.aktiv ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>

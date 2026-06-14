@@ -20,7 +20,11 @@ export default async function PlaetzePage() {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Unsere Häuser</h1>
       <PlaetzeClient
-        standorte={standorte}
+        standorte={standorte.map((s) => ({
+          id: s.id,
+          name: s.name,
+          gesamtplaetze: (s as any).gesamtplaetze ?? null,
+        }))}
         plaetze={plaetze.map((p) => ({
           id: p.id,
           zimmernummer: p.zimmernummer,

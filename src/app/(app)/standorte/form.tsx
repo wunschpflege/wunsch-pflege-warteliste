@@ -12,6 +12,7 @@ interface Defaults {
   plz?: string;
   ort?: string;
   bemerkungen?: string;
+  gesamtplaetze?: number | null;
   aktiv?: boolean;
 }
 
@@ -128,8 +129,21 @@ export default function StandortFormClient({
           />
         </div>
 
+        {/* Gesamtplätze */}
+        <div>
+          <label className="label">Anzahl Plätze / Wohnungen</label>
+          <input
+            name="gesamtplaetze"
+            type="number"
+            min={0}
+            className="input"
+            defaultValue={defaults?.gesamtplaetze ?? ''}
+            placeholder="z. B. 28"
+          />
+        </div>
+
         {/* Bemerkungen */}
-        <div className="sm:col-span-2 lg:col-span-4">
+        <div className="sm:col-span-2 lg:col-span-3">
           <label className="label">Bemerkungen</label>
           <textarea name="bemerkungen" rows={2} className="textarea" defaultValue={defaults?.bemerkungen ?? ''} />
         </div>

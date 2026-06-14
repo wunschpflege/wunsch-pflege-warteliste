@@ -93,10 +93,11 @@ model Standort {
   hausnummer  String?
   plz         String?
   ort         String?
-  bemerkungen String?
-  aktiv       Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  bemerkungen    String?
+  gesamtplaetze  Int?
+  aktiv          Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   interessenten       Interessent[] @relation("AktuellerStandort")
   wunschInteressenten Interessent[] @relation("WunschStandorte")

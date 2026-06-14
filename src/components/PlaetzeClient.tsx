@@ -16,6 +16,7 @@ interface Platz {
 interface Standort {
   id: string;
   name: string;
+  gesamtplaetze: number | null;
 }
 
 const WG_FARBEN = [
@@ -92,7 +93,10 @@ export default function PlaetzeClient({ standorte, plaetze, canManage }: Props) 
     <div className="space-y-3">
       {standorte.map((s) => {
         const zimmer = plaetze.filter((p) => p.standortId === s.id);
+        const belegtCount = zimmer.filter((z) => z.belegt).length;
         const freiCount = zimmer.filter((z) => !z.belegt).length;
+        // Gesamtanzahl: aus Standort-Setting oder Anzahl angelegter Plätze
+        const gesamtAnzeige = s.gesamtplaetze ?? zimmer.length;
         const istOffen = offen.has(s.id);
         const addIstOffen = addOffen.has(s.id);
         const wgFarbe = WG_FARBEN[standorte.indexOf(s) % WG_FARBEN.length];
@@ -108,11 +112,16 @@ export default function PlaetzeClient({ standorte, plaetze, canManage }: Props) 
               <div className="flex items-center gap-3">
                 <span className={`h-3 w-3 rounded-full flex-shrink-0 ${wgFarbe}`} />
                 <span className="font-semibold">{s.name}</span>
-                <span className="text-sm text-muted">{zimmer.length} Zimmer</span>
+                <span className="text-sm text-muted">{gesamtAnzeige} Plätze</span>
               </div>
               <div className="flex items-center gap-3">
+                {belegtCount > 0 && (
+                  <span className="badge bg-gray-100 text-gray-600">{belegtCount} belegt</span>
+                )}
                 <span className={`badge ${freiCount > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-500'}`}>
-                  {freiCount} frei
+                  {s.gesamtplaetze != null
+                    ? `${s.gesamtplaetze - belegtCount} frei`
+                    : `${freiCount} frei`}
                 </span>
                 <svg className={`h-4 w-4 text-muted transition-transform ${istOffen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
