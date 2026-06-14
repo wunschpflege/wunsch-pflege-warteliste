@@ -17,19 +17,36 @@ export default async function StandortePage({
 
   const sp = await searchParams;
   const editId = sp.edit ?? null;
+  const neuOffen = sp.neu === '1';
 
   const standorte = await prisma.standort.findMany({
     orderBy: { name: 'asc' },
     include: { _count: { select: { interessenten: true, plaetze: true } } },
   });
 
+  // Plätze-Belegungs-Zahlen pro Standort
+  const plaetzeGruppiert = await prisma.platz.groupBy({
+    by: ['standortId', 'belegt'],
+    _count: { _all: true },
+  });
+  const platzMap = new Map<string, { frei: number; belegt: number }>();
+  for (const p of plaetzeGruppiert) {
+    const cur = platzMap.get(p.standortId) ?? { frei: 0, belegt: 0 };
+    if (p.belegt) cur.belegt += p._count._all;
+    else cur.frei += p._count._all;
+    platzMap.set(p.standortId, cur);
+  }
+
   const editStandort = editId ? standorte.find((s) => s.id === editId) ?? null : null;
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-semibold">Standorte</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Standorte</h1>
+      </div>
 
-      {editStandort ? (
+      {/* Bearbeiten-Formular (wenn edit-Param gesetzt) */}
+      {editStandort && (
         <StandortFormClient
           action={saveStandort.bind(null, editStandort.id)}
           title={`Standort bearbeiten – ${editStandort.name}`}
@@ -44,14 +61,31 @@ export default async function StandortePage({
             aktiv: editStandort.aktiv,
           }}
         />
-      ) : (
-        <StandortFormClient
-          action={saveStandort.bind(null, null)}
-          title="Neuen Standort anlegen"
-          submitLabel="Anlegen"
-        />
       )}
 
+      {/* Neuen Standort anlegen – Accordion */}
+      {!editStandort && (
+        <details open={neuOffen} className="group card overflow-hidden">
+          <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors list-none">
+            <div className="flex items-center gap-3">
+              <span className="h-8 w-8 rounded-lg bg-brand-100 text-brand-700 grid place-items-center text-lg font-bold">+</span>
+              <span className="font-semibold">Neuen Standort anlegen</span>
+            </div>
+            <svg className="h-4 w-4 text-muted transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </summary>
+          <div className="border-t border-[var(--border)] px-5 pb-5 pt-4">
+            <StandortFormClient
+              action={saveStandort.bind(null, null)}
+              title=""
+              submitLabel="Anlegen"
+            />
+          </div>
+        </details>
+      )}
+
+      {/* Standort-Liste */}
       <div className="card overflow-x-auto">
         <table className="w-full">
           <thead className="border-b border-[var(--border)]">
@@ -66,6 +100,8 @@ export default async function StandortePage({
           </thead>
           <tbody>
             {standorte.map((s) => {
+              const pz = platzMap.get(s.id) ?? { frei: 0, belegt: 0 };
+              const gesamt = pz.frei + pz.belegt;
               return (
                 <tr key={s.id} className="border-b border-[var(--border)] last:border-0">
                   <td className="td font-medium">{s.name}</td>
@@ -82,7 +118,23 @@ export default async function StandortePage({
                     ) : <span className="text-muted">–</span>}
                   </td>
                   <td className="td">{s._count.interessenten}</td>
-                  <td className="td">{s._count.plaetze}</td>
+                  <td className="td">
+                    {gesamt > 0 ? (
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="inline-flex items-center gap-1 text-green-700 font-medium">
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500 inline-block" />
+                          {pz.frei} frei
+                        </span>
+                        <span className="text-muted">·</span>
+                        <span className="inline-flex items-center gap-1 text-gray-500">
+                          <span className="h-1.5 w-1.5 rounded-full bg-gray-400 inline-block" />
+                          {pz.belegt} belegt
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-muted text-sm">–</span>
+                    )}
+                  </td>
                   <td className="td">
                     <span className={`badge ${s.aktiv ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>
                       {s.aktiv ? 'aktiv' : 'inaktiv'}

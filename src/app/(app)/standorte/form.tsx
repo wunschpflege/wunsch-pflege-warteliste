@@ -62,8 +62,8 @@ export default function StandortFormClient({
   }, [strasse, hausnummer]);
 
   return (
-    <form ref={ref} action={formAction} className="card p-5 space-y-4">
-      <h2 className="font-semibold">{title}</h2>
+    <form ref={ref} action={formAction} className="space-y-4">
+      {title && <h2 className="font-semibold">{title}</h2>}
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
         {/* Name */}
