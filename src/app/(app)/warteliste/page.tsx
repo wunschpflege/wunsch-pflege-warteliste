@@ -317,10 +317,15 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
       {/* ── TAB: WIEDERVORLAGEN ───────────────────────────────── */}
       {tab === 'wiedervorlagen' && can(user, 'wiedervorlage.manage') && (
         <div className="space-y-5">
-          <section className="card p-5">
-            <h2 className="font-semibold mb-3">Neue Wiedervorlage</h2>
-            <WiedervorlageForm />
-          </section>
+          <details className="group card overflow-hidden">
+            <summary className="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors list-none">
+              <span className="font-semibold">Neue Wiedervorlage anlegen</span>
+              <svg className="h-4 w-4 text-muted transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </summary>
+            <div className="border-t border-[var(--border)] px-5 pb-5 pt-4">
+              <WiedervorlageForm />
+            </div>
+          </details>
 
           <div className="flex gap-2">
             <Link href="/warteliste?tab=wiedervorlagen" className={!sp.wv ? 'btn-primary' : 'btn-ghost'}>Offen</Link>
