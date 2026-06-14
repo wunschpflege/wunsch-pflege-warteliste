@@ -207,6 +207,24 @@ export async function zimmerAnbieten(id: string, fd: FormData): Promise<void> {
   revalidatePath('/warteliste');
 }
 
+export async function letzterKontaktEintragen(id: string, fd: FormData): Promise<void> {
+  const user = await requireUser();
+  requirePermission(user, 'interessent.update');
+  const datum = fd.get('letzterKontakt') as string | null;
+  const wg = fd.get('platzAngebotenWg') as string | null;
+  const bewohner = fd.get('platzAngebotenInfo') as string | null;
+  const data: Record<string, unknown> = {};
+  if (datum) data.letzterKontakt = new Date(datum);
+  if (wg !== null) data.platzAngebotenWg = wg || null;
+  if (bewohner !== null) data.platzAngebotenInfo = bewohner || null;
+  if (wg) data.platzAngebotenAm = datum ? new Date(datum) : new Date();
+  await prisma.interessent.update({ where: { id }, data: data as never });
+  const teile = [`Telefonat am ${datum ?? '–'}`];
+  if (wg) teile.push(`Zimmer angeboten: ${wg}${bewohner ? ` (von ${bewohner})` : ''}`);
+  await logHistorie(id, user, teile.join(' · '));
+  revalidatePath('/warteliste');
+}
+
 export async function bulkStatusAendern(ids: string[], status: string): Promise<void> {
   const user = await requireUser();
   requirePermission(user, 'interessent.update');

@@ -7,6 +7,7 @@ import SchnellStatusSelect from './SchnellStatusSelect';
 import SortHeader from './SortHeader';
 import { toggleMarkiert, bulkStatusAendern } from '@/app/(app)/warteliste/actions';
 import ZimmerAngebotenModal from './ZimmerAngebotenModal';
+import KontaktModal from './KontaktModal';
 
 const statusOptions = Object.entries(STATUS_LABEL) as [string, string][];
 
@@ -52,8 +53,9 @@ const PRIO_DOT: Record<string, string> = {
 };
 
 function WgChips({ standorte }: { standorte: { name: string }[] }) {
+  const [aufgeklappt, setAufgeklappt] = useState(false);
   if (standorte.length === 0) return <span className="text-muted text-xs">–</span>;
-  const sichtbar = standorte.slice(0, 2);
+  const sichtbar = aufgeklappt ? standorte : standorte.slice(0, 2);
   const rest = standorte.length - 2;
   return (
     <div className="flex flex-wrap gap-1">
@@ -62,8 +64,23 @@ function WgChips({ standorte }: { standorte: { name: string }[] }) {
           {s.name}
         </span>
       ))}
-      {rest > 0 && (
-        <span className="inline-block text-xs bg-gray-100 text-gray-500 rounded-md px-1.5 py-0.5">+{rest}</span>
+      {!aufgeklappt && rest > 0 && (
+        <button
+          type="button"
+          onClick={() => setAufgeklappt(true)}
+          className="inline-block text-xs bg-gray-100 text-gray-500 hover:bg-brand-50 hover:text-brand-700 rounded-md px-1.5 py-0.5 cursor-pointer transition-colors"
+        >
+          +{rest}
+        </button>
+      )}
+      {aufgeklappt && standorte.length > 2 && (
+        <button
+          type="button"
+          onClick={() => setAufgeklappt(false)}
+          className="inline-block text-xs bg-gray-100 text-gray-500 hover:bg-gray-200 rounded-md px-1.5 py-0.5 cursor-pointer"
+        >
+          ↑
+        </button>
       )}
     </div>
   );
@@ -184,10 +201,17 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
                   </td>
                   {!abgelehnt && (
                     <td className="td py-3 whitespace-nowrap">
-                      <span className={kontaktAlt ? 'text-orange-600 font-medium' : 'text-muted'}>
-                        {letzterKontakt ? fmtDate(letzterKontakt) : '–'}
-                        {kontaktAlt && ' ⚠'}
-                      </span>
+                      {canUpdate
+                        ? <KontaktModal
+                            id={i.id}
+                            letzterKontakt={i.letzterKontakt}
+                            platzAngebotenWg={i.platzAngebotenWg}
+                            platzAngebotenInfo={i.platzAngebotenInfo}
+                          />
+                        : <span className={kontaktAlt ? 'text-orange-600 font-medium' : 'text-muted'}>
+                            {letzterKontakt ? fmtDate(letzterKontakt) : '–'}
+                            {kontaktAlt && ' ⚠'}
+                          </span>}
                     </td>
                   )}
                   {!abgelehnt && (
