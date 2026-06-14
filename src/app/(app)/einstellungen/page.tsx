@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
-import { can, getMatrix, ALL_PERMISSIONS, PERMISSION_LABEL } from '@/lib/rbac';
+import { can, getMatrix } from '@/lib/rbac';
 import { saveMatrix } from './actions';
 import EinstellungenForm from './form';
 
@@ -25,8 +25,6 @@ export default async function EinstellungenPage() {
         <EinstellungenForm
           action={saveMatrix}
           matrix={matrix as { PDL: string[]; VERWALTUNG: string[] }}
-          permissions={ALL_PERMISSIONS}
-          permissionLabels={PERMISSION_LABEL}
         />
       </section>
 
