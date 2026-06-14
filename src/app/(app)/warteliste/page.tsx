@@ -236,6 +236,7 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
               angehoerigerNachname: i.angehoerigerNachname ?? null,
               platzAngebotenAm: (i as any).platzAngebotenAm ?? null,
               platzAngebotenInfo: (i as any).platzAngebotenInfo ?? null,
+              platzAngebotenWg: (i as any).platzAngebotenWg ?? null,
               rueckmeldungBis: (i as any).rueckmeldungBis ?? null,
               standort: i.standort ?? null,
               erstelltVon: i.erstelltVon,

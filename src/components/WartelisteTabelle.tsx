@@ -27,6 +27,7 @@ interface Eintrag {
   angehoerigerNachname: string | null;
   platzAngebotenAm: Date | string | null;
   platzAngebotenInfo: string | null;
+  platzAngebotenWg: string | null;
   rueckmeldungBis: Date | string | null;
   standort: { name: string } | null;
   erstelltVon: { kuerzel: string };
@@ -164,7 +165,7 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
                   </td>
                   <td className="td text-sm">
                     {canUpdate
-                      ? <ZimmerAngebotenModal id={i.id} platzAngebotenAm={i.platzAngebotenAm} platzAngebotenInfo={i.platzAngebotenInfo} rueckmeldungBis={i.rueckmeldungBis} />
+                      ? <ZimmerAngebotenModal id={i.id} platzAngebotenAm={i.platzAngebotenAm} platzAngebotenInfo={i.platzAngebotenInfo} platzAngebotenWg={i.platzAngebotenWg} rueckmeldungBis={i.rueckmeldungBis} />
                       : i.platzAngebotenAm
                         ? <div>
                             <p className="text-xs font-medium">{fmtDate(new Date(i.platzAngebotenAm))}</p>

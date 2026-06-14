@@ -140,7 +140,8 @@ model Interessent {
 
   // --- Angebot & Rückmeldung ---
   platzAngebotenAm    DateTime?  // Wann wurde ein Zimmer angeboten
-  platzAngebotenInfo  String?    // Welches Zimmer / welche WG
+  platzAngebotenInfo  String?    // Zimmer frei von (Vorpatient)
+  platzAngebotenWg    String?    // Einrichtung / WG
   rueckmeldungBis     DateTime?  // Bis wann soll Rückmeldung kommen
 
   standort         Standort? @relation("AktuellerStandort", fields: [standortId], references: [id])

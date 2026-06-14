@@ -8,6 +8,7 @@ interface Props {
   id: string;
   platzAngebotenAm: Date | string | null;
   platzAngebotenInfo: string | null;
+  platzAngebotenWg: string | null;
   rueckmeldungBis: Date | string | null;
 }
 
@@ -15,7 +16,7 @@ function today() {
   return new Date().toISOString().split('T')[0];
 }
 
-export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebotenInfo, rueckmeldungBis }: Props) {
+export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebotenInfo, platzAngebotenWg, rueckmeldungBis }: Props) {
   const [offen, setOffen] = useState(false);
   const [pending, setPending] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -42,6 +43,7 @@ export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebo
         >
           <p className="text-xs font-medium">{fmtDate(new Date(platzAngebotenAm))}</p>
           {platzAngebotenInfo && <p className="text-xs text-muted">{platzAngebotenInfo}</p>}
+          {platzAngebotenWg && <p className="text-xs text-muted">{platzAngebotenWg}</p>}
           {rueckmeldungBis && (
             <p className={`text-xs font-medium ${ueberfaellig ? 'text-red-600' : 'text-amber-600'}`}>
               {ueberfaellig ? '⚠ Überfällig' : '⏳'} bis {fmtDate(new Date(rueckmeldungBis))}
@@ -79,6 +81,16 @@ export default function ZimmerAngebotenModal({ id, platzAngebotenAm, platzAngebo
                   name="platzAngebotenInfo"
                   defaultValue={platzAngebotenInfo ?? ''}
                   placeholder="z. B. Frau Meier"
+                  className="input"
+                />
+              </div>
+              <div>
+                <label className="label">Einrichtung / WG</label>
+                <input
+                  type="text"
+                  name="platzAngebotenWg"
+                  defaultValue={platzAngebotenWg ?? ''}
+                  placeholder="z. B. WG Aplerbeck"
                   className="input"
                 />
               </div>
