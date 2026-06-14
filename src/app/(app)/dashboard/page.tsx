@@ -26,14 +26,14 @@ export default async function Dashboard() {
 
   const [
     freiePlaetze, warteliste, neueWoche, rueckrufe,
-    plaetzeProStandort, wiedervorlagen, letzteAktivitaeten,
+    belegtProStandort, wiedervorlagen, letzteAktivitaeten,
     langeWartezeit, ueberfaelligeRueckmeldungen,
   ] = await Promise.all([
     prisma.platz.count({ where: { belegt: false } }),
     prisma.interessent.count({ where: { status: { in: ['WARTELISTE', 'NEUE_ANFRAGE', 'BESICHTIGUNG_GEPLANT'] } } }),
     prisma.interessent.count({ where: { createdAt: { gte: weekAgo } } }),
     prisma.wiedervorlage.count({ where: { typ: 'RUECKRUF', erledigt: false, faelligAm: { lte: in7 } } }),
-    prisma.platz.groupBy({ by: ['standortId'], where: { belegt: false }, _count: { _all: true } }),
+    prisma.platz.groupBy({ by: ['standortId'], where: { belegt: true }, _count: { _all: true } }),
     prisma.wiedervorlage.findMany({
       where: { erledigt: false, faelligAm: { lte: in7 } },
       include: { interessent: true },
@@ -46,7 +46,14 @@ export default async function Dashboard() {
   ]);
 
   const standorte = await prisma.standort.findMany({ where: { aktiv: true }, orderBy: { name: 'asc' } });
-  const freiMap = new Map(plaetzeProStandort.map((p) => [p.standortId, p._count._all]));
+  // belegtMap: Anzahl belegter Platz-Einträge pro Standort
+  const belegtMap = new Map(belegtProStandort.map((p) => [p.standortId, p._count._all]));
+  // freiMap: gesamtplaetze - belegt (wenn gesamtplaetze gesetzt), sonst Platz-Einträge ohne Bewohner
+  const freiMap = new Map(standorte.map((s) => {
+    const belegt = belegtMap.get(s.id) ?? 0;
+    const gesamt = (s as any).gesamtplaetze;
+    return [s.id, gesamt != null ? Math.max(0, gesamt - belegt) : null];
+  }));
 
   const neuListe = await prisma.interessent.findMany({
     where: { createdAt: { gte: weekAgo } },
@@ -88,14 +95,27 @@ export default async function Dashboard() {
           <details>
             <summary className="font-semibold cursor-pointer select-none">Freie Plätze nach Standort</summary>
             <div className="space-y-1.5 mt-3">
-              {standorte.map((s) => (
-                <div key={s.id} className="flex items-center justify-between text-sm py-1 border-b border-[var(--border)] last:border-0">
-                  <span>{s.name}</span>
-                  <span className={`badge ${(freiMap.get(s.id) ?? 0) > 0 ? 'bg-brand-100 text-brand-800' : 'bg-gray-100 text-gray-500'}`}>
-                    {freiMap.get(s.id) ?? 0} frei
-                  </span>
-                </div>
-              ))}
+              {standorte.map((s) => {
+                const frei = freiMap.get(s.id);
+                const belegt = belegtMap.get(s.id) ?? 0;
+                const gesamt = (s as any).gesamtplaetze;
+                return (
+                  <div key={s.id} className="flex items-center justify-between text-sm py-1.5 border-b border-[var(--border)] last:border-0">
+                    <span className="font-medium">{s.name}</span>
+                    <div className="flex items-center gap-2">
+                      {gesamt != null && (
+                        <span className="text-xs text-muted">{gesamt} gesamt</span>
+                      )}
+                      {belegt > 0 && (
+                        <span className="badge bg-gray-100 text-gray-500">{belegt} belegt</span>
+                      )}
+                      <span className={`badge ${frei != null && frei > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>
+                        {frei != null ? frei : '–'} frei
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
               {standorte.length === 0 && <p className="text-sm text-muted">Keine Standorte angelegt.</p>}
             </div>
           </details>
