@@ -92,24 +92,17 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
               <th className="th w-8">
                 <input type="checkbox" checked={ausgewaehlt.size === eintraege.length && eintraege.length > 0} onChange={toggleAlle} className="h-4 w-4 accent-brand-600 cursor-pointer" />
               </th>
-              <th className="th w-6"></th>
               <th className="th">
                 <SortHeader label="Name" field="nachname" currentSort={sortBy} currentDir={sortDir} baseUrl={`/warteliste?${baseFilterQs}`} />
               </th>
               <th className="th">Angehöriger</th>
-              <th className="th">Standort</th>
               <th className="th">Pflegegrad</th>
-              <th className="th">
-                <SortHeader label="Priorität" field="prioritaet" currentSort={sortBy} currentDir={sortDir} baseUrl={`/warteliste?${baseFilterQs}`} />
-              </th>
+              <th className="th">Standort</th>
+              <th className="th">Letzter Kontakt</th>
+              <th className="th">Zimmer angeboten</th>
               <th className="th">
                 <SortHeader label="Status" field="status" currentSort={sortBy} currentDir={sortDir} baseUrl={`/warteliste?${baseFilterQs}`} />
               </th>
-              <th className="th">
-                <SortHeader label="Wartezeit" field="createdAt" currentSort={sortBy} currentDir={sortDir} baseUrl={`/warteliste?${baseFilterQs}`} />
-              </th>
-              <th className="th">Letzter Kontakt</th>
-              <th className="th">Angebot / Rückmeldung</th>
               <th className="th">MA</th>
               <th className="th"></th>
             </tr>
@@ -122,36 +115,47 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
               const rueckmeldungUeberfaellig = i.rueckmeldungBis && new Date(i.rueckmeldungBis) < now;
               const letzterKontakt = i.letzterKontakt ? new Date(i.letzterKontakt) : null;
               const kontaktAlt = letzterKontakt && Math.floor((now.getTime() - letzterKontakt.getTime()) / 86_400_000) > 30;
+              const prioPunkt: Record<string, string> = {
+                DRINGEND: 'bg-red-500',
+                HOCH: 'bg-orange-400',
+                NORMAL: 'bg-gray-300',
+                NIEDRIG: 'bg-gray-200',
+              };
+              const warteText = wartetage < 30
+                ? `${wartetage} Tage`
+                : wartetage < 365
+                  ? `${Math.floor(wartetage / 30)} Monate`
+                  : `${Math.floor(wartetage / 365)} J. ${Math.floor((wartetage % 365) / 30)} M.`;
               return (
                 <tr key={i.id} className={`border-b border-[var(--border)] last:border-0 ${zeilenKlasse}`}>
                   <td className="td">
                     <input type="checkbox" checked={ausgewaehlt.has(i.id)} onChange={() => toggle(i.id)} className="h-4 w-4 accent-brand-600 cursor-pointer" />
                   </td>
-                  <td className="td text-center">{i.markiert && <span title="Markiert">⭐</span>}</td>
                   <td className="td">
-                    <Link href={`/warteliste/${i.id}`} className="font-medium text-brand-600 hover:underline">
-                      {i.nachname}, {i.vorname}
-                    </Link>
-                    {wartetage >= 90 && <p className="text-xs text-red-600 font-medium">⚠ {wartetage} Tage</p>}
-                    {i.schnellnotiz && <p className="text-xs text-muted">{i.schnellnotiz}</p>}
+                    <div className="flex items-start gap-2">
+                      <span
+                        className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${prioPunkt[i.prioritaet] ?? 'bg-gray-300'}`}
+                        title={PRIO_LABEL[i.prioritaet as keyof typeof PRIO_LABEL]}
+                      />
+                      <div>
+                        <Link href={`/warteliste/${i.id}`} className="font-medium text-brand-600 hover:underline">
+                          {i.nachname}, {i.vorname}
+                        </Link>
+                        <p className="text-xs text-muted">
+                          {warteText}
+                          {i.markiert && ' · ⭐'}
+                        </p>
+                        {i.schnellnotiz && <p className="text-xs text-muted italic">{i.schnellnotiz}</p>}
+                      </div>
+                    </div>
                   </td>
                   <td className="td">
                     {(i.angehoerigerVorname || i.angehoerigerNachname)
                       ? <><span>{i.angehoerigerVorname} {i.angehoerigerNachname}</span><br /><span className="text-xs text-muted">{i.telefonMobil ?? i.telefonFestnetz ?? ''}</span></>
                       : '–'}
                   </td>
-                  <td className="td">{i.standort?.name ?? '–'}</td>
-                  <td className="td">{PFLEGEGRAD_LABEL[i.pflegegrad as keyof typeof PFLEGEGRAD_LABEL]}</td>
-                  <td className="td">{PRIO_LABEL[i.prioritaet as keyof typeof PRIO_LABEL]}</td>
-                  <td className="td">
-                    {canUpdate
-                      ? <SchnellStatusSelect id={i.id} currentStatus={i.status} />
-                      : <span className={`badge ${STATUS_COLOR[i.status as keyof typeof STATUS_COLOR]}`}>{STATUS_LABEL[i.status as keyof typeof STATUS_LABEL]}</span>
-                    }
-                  </td>
-                  <td className="td whitespace-nowrap text-sm">
-                    {wartetage < 30 ? `${wartetage}d` : wartetage < 365 ? `${Math.floor(wartetage/30)}M` : `${Math.floor(wartetage/365)}J ${Math.floor((wartetage%365)/30)}M`}
-                  </td>
+                  <td className="td whitespace-nowrap">{PFLEGEGRAD_LABEL[i.pflegegrad as keyof typeof PFLEGEGRAD_LABEL]}</td>
+                  <td className="td whitespace-nowrap">{i.standort?.name ?? '–'}</td>
                   <td className="td text-sm whitespace-nowrap">
                     <span className={kontaktAlt ? 'text-orange-600 font-medium' : ''}>
                       {letzterKontakt ? fmtDate(letzterKontakt) : '–'}
@@ -161,7 +165,7 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
                   <td className="td text-sm">
                     {i.platzAngebotenAm ? (
                       <div>
-                        <p className="text-xs">Angeboten: <strong>{fmtDate(new Date(i.platzAngebotenAm))}</strong></p>
+                        <p className="text-xs font-medium">{fmtDate(new Date(i.platzAngebotenAm))}</p>
                         {i.platzAngebotenInfo && <p className="text-xs text-muted">{i.platzAngebotenInfo}</p>}
                         {i.rueckmeldungBis && (
                           <p className={`text-xs font-medium ${rueckmeldungUeberfaellig ? 'text-red-600' : 'text-amber-600'}`}>
@@ -170,6 +174,12 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
                         )}
                       </div>
                     ) : '–'}
+                  </td>
+                  <td className="td">
+                    {canUpdate
+                      ? <SchnellStatusSelect id={i.id} currentStatus={i.status} />
+                      : <span className={`badge ${STATUS_COLOR[i.status as keyof typeof STATUS_COLOR]}`}>{STATUS_LABEL[i.status as keyof typeof STATUS_LABEL]}</span>
+                    }
                   </td>
                   <td className="td"><span className="kuerzel">{i.erstelltVon.kuerzel}</span></td>
                   <td className="td">
@@ -188,7 +198,7 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
               );
             })}
             {eintraege.length === 0 && (
-              <tr><td colSpan={13} className="td text-center text-muted py-8">Keine Einträge gefunden.</td></tr>
+              <tr><td colSpan={10} className="td text-center text-muted py-8">Keine Einträge gefunden.</td></tr>
             )}
           </tbody>
         </table>
