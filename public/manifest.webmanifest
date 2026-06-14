@@ -1,0 +1,19 @@
+{
+  "name": "Wunsch-Pflege Warteliste",
+  "short_name": "WP Warteliste",
+  "description": "Wartelistenverwaltung für die Wunsch-Pflege GmbH",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#f5f0eb",
+  "theme_color": "#dc2626",
+  "orientation": "portrait-primary",
+  "lang": "de",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

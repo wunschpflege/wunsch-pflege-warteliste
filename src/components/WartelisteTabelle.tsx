@@ -132,7 +132,95 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
         </form>
       )}
 
-      <div className="card overflow-x-auto">
+      {/* ── MOBILE: Karten-Layout ─────────────────────────────── */}
+      <div className="md:hidden space-y-3">
+        {eintraege.map((i) => {
+          const wartetage = Math.floor((now.getTime() - new Date(i.createdAt).getTime()) / 86_400_000);
+          const warteText = wartetage < 30 ? `${wartetage}d` : wartetage < 365 ? `${Math.floor(wartetage / 30)}M` : `${Math.floor(wartetage / 365)}J`;
+          const randKlasse = !abgelehnt && wartetage >= 90 ? 'border-l-4 border-l-red-400' : !abgelehnt && wartetage >= 60 ? 'border-l-4 border-l-amber-400' : '';
+          const letzterKontakt = i.letzterKontakt ? new Date(i.letzterKontakt) : null;
+          const kontaktAlt = letzterKontakt && Math.floor((now.getTime() - letzterKontakt.getTime()) / 86_400_000) > 30;
+          return (
+            <div key={i.id} className={`card p-4 ${randKlasse}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-start gap-2 min-w-0">
+                  <span className={`mt-1.5 h-2.5 w-2.5 rounded-full flex-shrink-0 ${PRIO_DOT[i.prioritaet] ?? 'bg-gray-300'}`} />
+                  <div className="min-w-0">
+                    <Link href={`/warteliste/${i.id}`} className="font-semibold text-brand-600 leading-tight">
+                      {i.nachname}, {i.vorname}
+                    </Link>
+                    <p className="text-xs text-muted mt-0.5">{warteText}{i.markiert && ' · ⭐'}</p>
+                    {i.schnellnotiz && <p className="text-xs text-muted italic truncate">{i.schnellnotiz}</p>}
+                  </div>
+                </div>
+                <div className="flex-shrink-0">
+                  {canUpdate
+                    ? <SchnellStatusSelect id={i.id} currentStatus={i.status} />
+                    : <span className={`badge ${STATUS_COLOR[i.status as keyof typeof STATUS_COLOR]}`}>{STATUS_LABEL[i.status as keyof typeof STATUS_LABEL]}</span>}
+                </div>
+              </div>
+
+              <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                <div>
+                  <p className="text-muted font-medium uppercase tracking-wide mb-0.5">Pflegegrad</p>
+                  <span className="bg-gray-100 text-gray-600 rounded px-1.5 py-0.5">{PFLEGEGRAD_LABEL[i.pflegegrad as keyof typeof PFLEGEGRAD_LABEL]}</span>
+                </div>
+                {(i.angehoerigerVorname || i.angehoerigerNachname) && (
+                  <div>
+                    <p className="text-muted font-medium uppercase tracking-wide mb-0.5">Angehöriger</p>
+                    <p>{i.angehoerigerVorname} {i.angehoerigerNachname}</p>
+                    {(i.telefonMobil ?? i.telefonFestnetz) && (
+                      <a href={`tel:${i.telefonMobil ?? i.telefonFestnetz}`} className="text-brand-600">{i.telefonMobil ?? i.telefonFestnetz}</a>
+                    )}
+                  </div>
+                )}
+                {i.wunschStandorte.length > 0 && (
+                  <div className="col-span-2">
+                    <p className="text-muted font-medium uppercase tracking-wide mb-0.5">Gewünschte WG/Wohnung</p>
+                    <WgChips standorte={i.wunschStandorte} />
+                  </div>
+                )}
+                {!abgelehnt && (
+                  <div>
+                    <p className="text-muted font-medium uppercase tracking-wide mb-0.5">Letzter Kontakt</p>
+                    {canUpdate
+                      ? <KontaktModal id={i.id} letzterKontakt={i.letzterKontakt} platzAngebotenWg={i.platzAngebotenWg} platzAngebotenInfo={i.platzAngebotenInfo} standorte={standorte} />
+                      : <span className={kontaktAlt ? 'text-orange-600 font-medium' : 'text-muted'}>{letzterKontakt ? fmtDate(letzterKontakt) : '–'}</span>}
+                  </div>
+                )}
+                {!abgelehnt && (
+                  <div>
+                    <p className="text-muted font-medium uppercase tracking-wide mb-0.5">Zimmer angeboten</p>
+                    {canUpdate
+                      ? <ZimmerAngebotenModal id={i.id} platzAngebotenAm={i.platzAngebotenAm} platzAngebotenInfo={i.platzAngebotenInfo} platzAngebotenWg={i.platzAngebotenWg} rueckmeldungBis={i.rueckmeldungBis} standorte={standorte} />
+                      : i.platzAngebotenAm ? <span>{fmtDate(new Date(i.platzAngebotenAm))}</span> : <span className="text-muted">–</span>}
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 pt-2.5 border-t border-[var(--border)] flex items-center justify-between">
+                <span className="kuerzel text-xs">{i.erstelltVon.kuerzel}</span>
+                <div className="flex items-center gap-3">
+                  {canUpdate && (
+                    <form action={toggleMarkiert.bind(null, i.id)}>
+                      <button className="text-sm text-muted hover:text-amber-500 h-8 w-8 flex items-center justify-center" title={i.markiert ? 'Markierung entfernen' : 'Als wichtig markieren'}>
+                        {i.markiert ? '★' : '☆'}
+                      </button>
+                    </form>
+                  )}
+                  <Link href={`/warteliste/${i.id}`} className="btn-ghost text-xs py-1.5">Öffnen →</Link>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {eintraege.length === 0 && (
+          <div className="card p-8 text-center text-muted text-sm">Keine Einträge gefunden.</div>
+        )}
+      </div>
+
+      {/* ── DESKTOP: Tabellen-Layout ──────────────────────────── */}
+      <div className="hidden md:block card overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-[var(--border)]">
@@ -257,6 +345,7 @@ export default function WartelisteTabelle({ eintraege, canUpdate, canDelete, sor
           </tbody>
         </table>
       </div>
+      {/* Ende Desktop-Block */}
     </>
   );
 }

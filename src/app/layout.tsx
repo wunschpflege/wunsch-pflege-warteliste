@@ -5,6 +5,16 @@ export const metadata: Metadata = {
   title: 'Wunsch-Pflege · Wartelistenverwaltung',
   description: 'Verwaltung der Wartelisten für freie WG-Plätze der Wunsch-Pflege GmbH',
   robots: { index: false, follow: false },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'WP Warteliste',
+  },
+  icons: {
+    icon: '/icons/icon.svg',
+    apple: '/icons/icon.svg',
+  },
 };
 
 export const viewport: Viewport = {
