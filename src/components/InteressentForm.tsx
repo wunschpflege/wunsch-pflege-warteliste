@@ -122,8 +122,8 @@ export default function InteressentForm({
             <DateInput name="platzAngebotenAm" defaultValue={fmtDateInput(data?.platzAngebotenAm)} />
           </div>
           <div className="sm:col-span-2">
-            <label className="label">Angebotenes Zimmer / WG</label>
-            <input name="platzAngebotenInfo" className="input" defaultValue={data?.platzAngebotenInfo ?? ''} placeholder="z. B. Zimmer 4 · WG Aplerbeck" />
+            <label className="label">Zimmer frei von</label>
+            <input name="platzAngebotenInfo" className="input" defaultValue={data?.platzAngebotenInfo ?? ''} placeholder="z. B. Frau Meier" />
           </div>
           <div className="sm:col-span-2">
             <label className="label">Rückmeldung erwünscht bis</label>
