@@ -118,7 +118,6 @@ export default async function WartelistePage({ searchParams }: { searchParams: P
 
   const tabs = [
     { key: 'interessenten', label: 'Interessenten' },
-    ...(can(user, 'platz.manage') ? [{ key: 'plaetze', label: 'Freie Plätze' }] : []),
     ...(can(user, 'wiedervorlage.manage') ? [{ key: 'wiedervorlagen', label: 'Wiedervorlagen' }] : []),
   ];
 
