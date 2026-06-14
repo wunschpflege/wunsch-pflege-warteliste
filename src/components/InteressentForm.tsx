@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DateInput from './DateInput';
 import type { Interessent, Standort } from '@prisma/client';
@@ -10,6 +10,30 @@ import type { ActionState } from '@/app/(app)/warteliste/actions';
 type Action = (prev: ActionState, fd: FormData) => Promise<ActionState>;
 
 const init: ActionState = { ok: false };
+
+const DIAGNOSEN_OPTIONEN = [
+  'Demenz', 'Alzheimer', 'Parkinson', 'Schlaganfall', 'Herzinsuffizienz',
+  'Koronare Herzkrankheit (KHK)', 'Herzrhythmusstörung', 'Bluthochdruck',
+  'Diabetes mellitus Typ 1', 'Diabetes mellitus Typ 2',
+  'COPD', 'Asthma', 'Niereninsuffizienz', 'Lebererkrankung',
+  'Depression', 'Angststörung', 'Psychose', 'Bipolare Störung',
+  'Multiple Sklerose', 'Epilepsie', 'ALS',
+  'Arthrose', 'Osteoporose', 'Rheuma', 'Hüft-TEP', 'Knie-TEP',
+  'Krebs / Onkologische Erkrankung', 'Inkontinenz',
+  'Sehbehinderung', 'Hörbehinderung', 'Schluckstörung (Dysphagie)',
+];
+
+const MOBILITAET_OPTIONEN = [
+  'Selbstständig gehfähig',
+  'Gehfähig mit Hilfsmittel (Rollator)',
+  'Gehfähig mit Hilfsmittel (Gehstock)',
+  'Eingeschränkt gehfähig',
+  'Rollstuhlpflichtig – selbst antreibend',
+  'Rollstuhlpflichtig – wird geschoben',
+  'Bettlägerig',
+  'Transfer möglich mit Hilfe',
+  'Transfer nur mit Lifter',
+];
 
 function Field({
   name, label, type = 'text', defaultValue, error, full, options, rows,
@@ -49,6 +73,13 @@ export default function InteressentForm({
   const router = useRouter();
   const fe = state.fieldErrors ?? {};
 
+  const initDiagnosen = (data?.diagnosen ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+  const [diagnosen, setDiagnosen] = useState<string[]>(initDiagnosen);
+
+  function toggleDiagnose(d: string) {
+    setDiagnosen((prev) => prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]);
+  }
+
   const statusOpts = Object.entries(STATUS_LABEL) as [string, string][];
   const prioOpts = Object.entries(PRIO_LABEL) as [string, string][];
   const pgOpts = Object.entries(PFLEGEGRAD_LABEL) as [string, string][];
@@ -76,8 +107,35 @@ export default function InteressentForm({
             <Field name="pflegegrad" label="Pflegegrad" defaultValue={data?.pflegegrad ?? 'KEINER'} options={pgOpts} />
             <Field name="gewuenschterEinzug" label="Gewünschter Einzugstermin" type="date" defaultValue={fmtDateInput(data?.gewuenschterEinzug)} />
             <Field name="wohnsituation" label="Aktuelle Wohnsituation" defaultValue={data?.wohnsituation} full />
-            <Field name="diagnosen" label="Diagnosen" defaultValue={data?.diagnosen} rows={2} full />
-            <Field name="mobilitaet" label="Mobilität" defaultValue={data?.mobilitaet} full />
+            <div className="sm:col-span-2">
+              <label className="label">Diagnosen (Mehrfachauswahl möglich)</label>
+              <input type="hidden" name="diagnosen" value={diagnosen.join(', ')} />
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 mt-1.5 p-3 rounded-xl border border-[var(--border)] bg-white max-h-56 overflow-y-auto">
+                {DIAGNOSEN_OPTIONEN.map((d) => (
+                  <label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:text-brand-600 py-0.5">
+                    <input
+                      type="checkbox"
+                      checked={diagnosen.includes(d)}
+                      onChange={() => toggleDiagnose(d)}
+                      className="h-4 w-4 accent-brand-600 cursor-pointer"
+                    />
+                    {d}
+                  </label>
+                ))}
+              </div>
+              {diagnosen.length > 0 && (
+                <p className="text-xs text-muted mt-1.5">Ausgewählt: {diagnosen.join(', ')}</p>
+              )}
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label">Mobilität</label>
+              <select name="mobilitaet" defaultValue={data?.mobilitaet ?? ''} className="select">
+                <option value="">– bitte wählen –</option>
+                {MOBILITAET_OPTIONEN.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
             <Field name="bemerkungen" label="Bemerkungen" defaultValue={data?.bemerkungen} rows={3} full />
             <Field name="schnellnotiz" label="Schnellnotiz (sichtbar in der Liste)" defaultValue={(data as any)?.schnellnotiz} full />
             <Field name="letzterKontakt" label="Letzter Kontakt" type="date" defaultValue={fmtDateInput((data as any)?.letzterKontakt)} />
