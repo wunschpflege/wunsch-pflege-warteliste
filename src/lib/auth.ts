@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
-import type { Role } from '@prisma/client';
+import { audit } from './audit';
+import type { Role, User } from '@prisma/client';
 
 const COOKIE = 'wp_session';
 const TTL_HOURS = Number(process.env.SESSION_TTL_HOURS ?? '8');
@@ -83,13 +84,7 @@ export async function requireUser(): Promise<SessionUser> {
   return user;
 }
 
-/** Prueft Zugangsdaten gegen die Datenbank (Benutzername + 4-stellige PIN). */
-export async function authenticate(username: string, pin: string): Promise<SessionUser | null> {
-  const u = await prisma.user.findUnique({ where: { username: username.toLowerCase().trim() } });
-  if (!u || !u.aktiv) return null;
-  const ok = await verifyPin(pin, u.passwordHash);
-  if (!ok) return null;
-  await prisma.user.update({ where: { id: u.id }, data: { letzterLogin: new Date() } });
+function toSessionUser(u: User): SessionUser {
   return {
     id: u.id,
     username: u.username,
@@ -98,4 +93,40 @@ export async function authenticate(username: string, pin: string): Promise<Sessi
     kuerzel: u.kuerzel,
     role: u.role,
   };
+}
+
+/** Prueft Zugangsdaten gegen die Datenbank (Benutzername + 4-stellige PIN). */
+export async function authenticate(username: string, pin: string): Promise<SessionUser | null> {
+  const u = await prisma.user.findUnique({ where: { username: username.toLowerCase().trim() } });
+  if (!u || !u.aktiv) return null;
+  const ok = await verifyPin(pin, u.passwordHash);
+  if (!ok) return null;
+  await prisma.user.update({ where: { id: u.id }, data: { letzterLogin: new Date() } });
+  return toSessionUser(u);
+}
+
+/**
+ * Anmeldung ueber das Portal (ohne PIN): sucht genau ein aktives Konto, dessen
+ * Benutzername ohne Beachtung der Gross-/Kleinschreibung dem Anmeldenamen entspricht.
+ */
+export async function authenticatePortal(anmeldename: string): Promise<SessionUser | null> {
+  const name = anmeldename.trim();
+  if (!name) return null;
+  const treffer = await prisma.user.findMany({
+    where: { username: { equals: name, mode: 'insensitive' }, aktiv: true },
+    take: 2,
+  });
+  if (treffer.length !== 1) return null;
+  const u = treffer[0];
+  await prisma.user.update({ where: { id: u.id }, data: { letzterLogin: new Date() } });
+  return toSessionUser(u);
+}
+
+/**
+ * Schliesst eine erfolgreiche Anmeldung ab: Session-Cookie setzen und Audit-Eintrag
+ * schreiben. Gemeinsamer Weg fuer PIN-Login und Portal-Anmeldung.
+ */
+export async function loginSession(user: SessionUser, details: string): Promise<void> {
+  await createSession(user);
+  await audit(user, 'LOGIN', 'User', user.id, details);
 }

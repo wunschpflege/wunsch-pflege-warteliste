@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { authenticate, createSession } from '@/lib/auth';
-import { audit } from '@/lib/audit';
+import { authenticate, loginSession } from '@/lib/auth';
 
 // ─── Brute-Force-Schutz ──────────────────────────────────────────────────────
 // Erlaubt max. 5 Fehlversuche pro IP innerhalb von 15 Minuten.
@@ -96,7 +95,6 @@ export async function POST(req: NextRequest) {
   }
 
   recordSuccess(ip);
-  await createSession(user);
-  await audit(user, 'LOGIN', 'User', user.id, `Anmeldung von IP ${ip}`);
+  await loginSession(user, `Anmeldung von IP ${ip}`);
   return NextResponse.json({ ok: true, user: { kuerzel: user.kuerzel, role: user.role } });
 }
