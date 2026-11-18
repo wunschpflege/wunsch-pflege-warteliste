@@ -1,5 +1,6 @@
 import 'server-only';
 import { createHash, timingSafeEqual } from 'crypto';
+import { NextResponse, type NextRequest } from 'next/server';
 
 /** App-ID dieses Programms im Wunsch-Pflege Portal. */
 export const PORTAL_APP_ID = 'warteliste';
@@ -19,6 +20,22 @@ export function safeEqual(a: string, b: string): boolean {
   const ha = createHash('sha256').update(a).digest();
   const hb = createHash('sha256').update(b).digest();
   return timingSafeEqual(ha, hb);
+}
+
+export const PORTAL_NO_STORE = { 'Cache-Control': 'no-store' };
+
+/**
+ * Pruefung fuer die serverseitigen Portal-Aufrufe ("Authorization: Bearer <PORTAL_SECRET>").
+ * Gibt die fertige Ablehnung zurueck (404 = Anbindung aus, 401 = falsch/fehlend) oder null, wenn alles stimmt.
+ */
+export function portalAbweisung(req: NextRequest): NextResponse | null {
+  const secret = portalSecret();
+  if (!secret) return new NextResponse(null, { status: 404 });
+  const auth = req.headers.get('authorization') ?? '';
+  if (!auth.startsWith('Bearer ') || !safeEqual(auth.slice(7), secret)) {
+    return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 401, headers: PORTAL_NO_STORE });
+  }
+  return null;
 }
 
 // ─── Einmal-Token (jti) ──────────────────────────────────────────────────────
