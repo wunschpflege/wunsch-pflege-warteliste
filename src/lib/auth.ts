@@ -111,16 +111,25 @@ function portalKontoWhere(anmeldename: string) {
 }
 
 /**
+ * Die Datenbank-Suche oben behandelt "_" und "%" im Namen als Platzhalter ("a_b" faende auch "axb").
+ * Deshalb zaehlen nur Treffer, deren Benutzername wirklich gleich ist.
+ */
+function genauGleich<T extends { username: string }>(treffer: T[], anmeldename: string): T[] {
+  const soll = anmeldename.toLowerCase();
+  return treffer.filter((u) => u.username.toLowerCase() === soll);
+}
+
+/**
  * Anmeldung ueber das Portal (ohne PIN): sucht genau ein aktives Konto, dessen
  * Benutzername ohne Beachtung der Gross-/Kleinschreibung dem Anmeldenamen entspricht.
  */
 export async function authenticatePortal(anmeldename: string): Promise<SessionUser | null> {
   const name = anmeldename.trim();
   if (!name) return null;
-  const treffer = await prisma.user.findMany({
-    where: { ...portalKontoWhere(name), aktiv: true },
-    take: 2,
-  });
+  const treffer = genauGleich(
+    await prisma.user.findMany({ where: { ...portalKontoWhere(name), aktiv: true } }),
+    name,
+  );
   if (treffer.length !== 1) return null;
   const u = treffer[0];
   await prisma.user.update({ where: { id: u.id }, data: { letzterLogin: new Date() } });
@@ -135,11 +144,14 @@ export async function authenticatePortal(anmeldename: string): Promise<SessionUs
 export async function findePortalKonto(anmeldename: string): Promise<{ aktiv: boolean; role: Role } | null> {
   const name = anmeldename.trim();
   if (!name) return null;
-  const treffer = await prisma.user.findMany({
-    where: portalKontoWhere(name),
-    orderBy: [{ aktiv: 'desc' }, { createdAt: 'asc' }],
-    select: { aktiv: true, role: true },
-  });
+  const treffer = genauGleich(
+    await prisma.user.findMany({
+      where: portalKontoWhere(name),
+      orderBy: [{ aktiv: 'desc' }, { createdAt: 'asc' }],
+      select: { aktiv: true, role: true, username: true },
+    }),
+    name,
+  );
   if (treffer.length === 0) return null;
   const aktive = treffer.filter((u) => u.aktiv);
   return { aktiv: aktive.length === 1, role: treffer[0].role };
