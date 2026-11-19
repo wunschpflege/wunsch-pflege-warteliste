@@ -1,5 +1,7 @@
 import { requireUser } from '@/lib/auth';
 import { ROLE_LABEL } from '@/lib/rbac';
+import { nurPortalAnmeldung } from '@/lib/portal';
+import { NUR_PORTAL_PIN_HINWEIS } from '@/lib/portal-anmeldung';
 import PinForm from './form';
 
 export const dynamic = 'force-dynamic';
@@ -33,10 +35,17 @@ export default async function ProfilPage() {
         </div>
       </section>
 
-      <section className="card p-5 space-y-4">
-        <h2 className="font-semibold">PIN ändern</h2>
-        <PinForm />
-      </section>
+      {nurPortalAnmeldung() ? (
+        <section className="card p-5 space-y-2">
+          <h2 className="font-semibold">Anmeldung</h2>
+          <p className="text-sm text-muted">{NUR_PORTAL_PIN_HINWEIS}</p>
+        </section>
+      ) : (
+        <section className="card p-5 space-y-4">
+          <h2 className="font-semibold">PIN ändern</h2>
+          <PinForm />
+        </section>
+      )}
     </div>
   );
 }

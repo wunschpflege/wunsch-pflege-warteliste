@@ -60,6 +60,7 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `SEED_ADMIN_LASTNAME`  | –       | Nachname des Admins (für Kürzel)                                    |
 | `SEED_DEMO_DATA`       | –       | `true` = Demo-Mitarbeiter/-Interessenten anlegen, sonst `false`     |
 | `PORTAL_SECRET`        | –       | Anbindung an das Portal (min. 32 Zeichen), siehe Abschnitt 10       |
+| `PORTAL_ANMELDUNG_URL` | –       | Anmeldung nur noch über das Portal (Adresse des Portals), siehe Abschnitt 10 |
 | `PORT`                 | –       | Port (von Railway gesetzt)                                          |
 
 > **Wichtig:** `SEED_ADMIN_PASSWORD` nach dem ersten Login ändern. Demodaten in der
@@ -217,6 +218,8 @@ Variable sind alle Endpunkte abgeschaltet (`404`) und die Anwendung verhält sic
 | GET     | `/api/portal/rollen`                   | Rollen für die Auswahl im Portal: `VERWALTUNG` (Standard), `PDL`, `GESCHAEFTSFUEHRUNG`. Aufruf mit Bearer wie oben. |
 | GET     | `/api/portal/konto?benutzername=<name>` | Auskunft, ob es das Konto gibt, ob es aktiv ist und welche Rolle es hat (gleiche Suche wie bei der Anmeldung). Aufruf mit Bearer wie oben. |
 | POST    | `/api/portal/konto`                    | Legt ein Konto an (`benutzername`, `vorname`, `nachname`, `rolle` als JSON). Gibt es das Konto schon, wird nichts geändert. Aufruf mit Bearer wie oben. |
+| GET     | `/api/portal/aufgaben?benutzername=<name>` | Offene Punkte hinter den Kennzahlen für „Was ist zu tun“ im Portal, passend zu den Rechten des Kontos. Ohne Namen und Freitexte. Aufruf mit Bearer wie oben. |
+| GET     | `/api/portal/konten`                   | Alle Konten (auch gesperrte) mit Rolle und letzter Anmeldung für die Sicherheitsübersicht; `nur_portal` zeigt, ob die PIN-Anmeldung abgeschaltet ist. Nie PIN-Hashes. Aufruf mit Bearer wie oben. |
 | POST    | `/api/portal/konto/sperren`            | Sperrt (deaktiviert) ein Konto (`benutzername` als JSON), z. B. wenn jemand das Unternehmen verlässt. Beliebig oft wiederholbar. Aufruf mit Bearer wie oben. |
 
 - Die Anmeldung über das Portal erzeugt dieselbe Session wie der PIN-Login und wird im
@@ -241,6 +244,21 @@ Variable sind alle Endpunkte abgeschaltet (`404`) und die Anwendung verhält sic
   wird nur in der Benutzerverwaltung der Warteliste, nie über das Portal.
 - Gemeldete Kennzahlen: überfällige Wiedervorlagen, überfällige Rückmeldungen, in 7 Tagen
   fällige Wiedervorlagen, unbearbeitete neue Anfragen, Wartezeit über 3 Monate, freie Plätze.
+- Aufgabenliste (`/api/portal/aufgaben`): dieselben Quellen und dieselbe Einstufung wie die Kennzahlen.
+  Überfällige und bald fällige Wiedervorlagen sowie überfällige Rückmeldungen erscheinen einzeln (je
+  höchstens 15, der Rest als „n weitere …“), neue Anfragen, lange Wartezeit und freie Plätze als je ein
+  Eintrag mit Anzahl. **Datenschutz:** Es werden nur Art, Datum, Anzahl und Standortname gemeldet – keine
+  Namen von Interessenten, Angehörigen oder Mitarbeitenden, keine Gesundheitsangaben und auch nicht der
+  frei eingegebene Titel einer Wiedervorlage. Rechte: Wiedervorlagen nur mit „Wiedervorlagen verwalten“,
+  Rückmeldungen/Anfragen/Wartezeit nur mit „Interessenten ansehen“ (Berechtigungsmatrix unter
+  Einstellungen); freie Plätze sieht jedes aktive Konto.
+- **Anmeldung nur noch über das Portal:** Ist `PORTAL_ANMELDUNG_URL` gesetzt (gültige `https://`-Adresse
+  des Portals, lokal auch `http://localhost`) und `PORTAL_SECRET` gültig, zeigt die Anmeldeseite statt
+  Benutzername/PIN den Knopf „Über das Portal anmelden“ (`<Adresse>/go/warteliste`), `/api/auth/login`
+  lehnt jede PIN-Anmeldung mit `403` ab, und „PIN ändern“ im Profil entfällt. Die Benutzerverwaltung
+  (einschließlich Start-PIN) bleibt unverändert. Vorher prüfen, dass jedes Konto im Portal mit seinem
+  Benutzernamen der Warteliste verknüpft ist – sonst kommt die Person nicht mehr hinein.
+  **Zurückschalten:** Variable löschen und neu starten; die PINs sind unverändert gespeichert.
 
 ---
 

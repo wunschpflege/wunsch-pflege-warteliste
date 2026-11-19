@@ -1,6 +1,7 @@
 import 'server-only';
 import { createHash, timingSafeEqual } from 'crypto';
 import { NextResponse, type NextRequest } from 'next/server';
+import { portalAnmeldeLink as anmeldeLink } from './portal-anmeldung';
 
 /** App-ID dieses Programms im Wunsch-Pflege Portal. */
 export const PORTAL_APP_ID = 'warteliste';
@@ -20,6 +21,19 @@ export function safeEqual(a: string, b: string): boolean {
   const ha = createHash('sha256').update(a).digest();
   const hb = createHash('sha256').update(b).digest();
   return timingSafeEqual(ha, hb);
+}
+
+/**
+ * Anmeldung nur noch ueber das Portal (PORTAL_ANMELDUNG_URL gesetzt und gueltig, PORTAL_SECRET gueltig):
+ * Adresse fuer den Knopf "Über das Portal anmelden". Sonst null – dann bleibt die PIN-Anmeldung wie bisher.
+ */
+export function portalAnmeldeLink(): string | null {
+  return anmeldeLink(PORTAL_APP_ID);
+}
+
+/** true = die eigene PIN-Anmeldung der Warteliste ist abgeschaltet. */
+export function nurPortalAnmeldung(): boolean {
+  return portalAnmeldeLink() !== null;
 }
 
 export const PORTAL_NO_STORE = { 'Cache-Control': 'no-store' };

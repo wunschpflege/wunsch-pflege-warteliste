@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireUser, verifyPin, hashPin } from '@/lib/auth';
+import { nurPortalAnmeldung } from '@/lib/portal';
+import { NUR_PORTAL_PIN_HINWEIS } from '@/lib/portal-anmeldung';
 
 export interface PinActionState {
   ok: boolean;
@@ -11,6 +13,8 @@ export interface PinActionState {
 
 export async function changePin(_prev: PinActionState, fd: FormData): Promise<PinActionState> {
   const user = await requireUser();
+  // Anmeldung nur noch ueber das Portal: eigene PIN wird nicht mehr geaendert
+  if (nurPortalAnmeldung()) return { ok: false, error: NUR_PORTAL_PIN_HINWEIS };
 
   const aktPin = fd.get('aktPin') as string;
   const neuePin = fd.get('neuePin') as string;
