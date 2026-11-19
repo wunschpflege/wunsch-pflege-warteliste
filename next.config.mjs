@@ -15,6 +15,12 @@ const nextConfig = {
           { key: 'Referrer-Policy',        value: 'strict-origin-when-cross-origin' },
         ],
       },
+      {
+        // Portal-Anmeldung: Token in der URL darf nicht per Referrer weitergegeben werden
+        // (ueberschreibt die allgemeine Regel oben, die sonst Vorrang vor dem Route-Handler haette)
+        source: '/api/portal/sso',
+        headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }],
+      },
     ];
   },
 };

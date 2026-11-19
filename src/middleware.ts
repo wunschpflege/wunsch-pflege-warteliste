@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 
-const PUBLIC = ['/login', '/api/auth/login', '/api/health'];
+// /api/portal: eigene Pruefung per PORTAL_SECRET (siehe src/lib/portal.ts)
+const PUBLIC = ['/login', '/api/auth/login', '/api/health', '/api/portal'];
 
 function secret(): Uint8Array | null {
   const s = process.env.AUTH_SECRET;

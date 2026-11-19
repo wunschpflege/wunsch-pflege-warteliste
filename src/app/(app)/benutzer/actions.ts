@@ -5,23 +5,10 @@ import { prisma } from '@/lib/prisma';
 import { requireUser, hashPin } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac';
 import { audit } from '@/lib/audit';
-import { buildInitials } from '@/lib/initials';
+import { uniqueKuerzel, benutzerAnlegen } from '@/lib/benutzer';
 import { userSchema, formToObject } from '@/lib/validation';
 
 type State = { ok: boolean; error?: string };
-
-/** Eindeutiges Kuerzel erzeugen (bei Kollision Ziffer anhaengen). */
-async function uniqueKuerzel(vorname: string, nachname: string, ignoreId?: string): Promise<string> {
-  const base = buildInitials(vorname, nachname);
-  let candidate = base;
-  let n = 1;
-  while (true) {
-    const found = await prisma.user.findFirst({ where: { kuerzel: candidate, NOT: ignoreId ? { id: ignoreId } : undefined } });
-    if (!found) return candidate;
-    n += 1;
-    candidate = `${base}${n}`;
-  }
-}
 
 /** Generiert Benutzername aus Vorname.Nachname (lowercase, ohne Sonderzeichen). */
 function buildUsername(vorname: string, nachname: string): string {
@@ -64,10 +51,7 @@ export async function saveUser(id: string | null, _prev: State, fd: FormData): P
     await audit(actor, 'UPDATE', 'User', id, `${vorname} ${nachname} (${kuerzel})`);
   } else {
     if (!pin) return { ok: false, error: 'Bitte eine Start-PIN vergeben (4 Ziffern).' };
-    const created = await prisma.user.create({
-      data: { vorname, nachname, role, kuerzel, username, passwordHash: await hashPin(pin) },
-    });
-    await audit(actor, 'CREATE', 'User', created.id, `${vorname} ${nachname} (${kuerzel}) → ${username}`);
+    await benutzerAnlegen({ vorname, nachname, role, kuerzel, username, passwordHash: await hashPin(pin) }, actor);
   }
   revalidatePath('/benutzer');
   return { ok: true };

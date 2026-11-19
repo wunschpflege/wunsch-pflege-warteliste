@@ -3,7 +3,8 @@ import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
-import type { Role } from '@prisma/client';
+import { audit } from './audit';
+import type { Role, User } from '@prisma/client';
 
 const COOKIE = 'wp_session';
 const TTL_HOURS = Number(process.env.SESSION_TTL_HOURS ?? '8');
@@ -83,13 +84,7 @@ export async function requireUser(): Promise<SessionUser> {
   return user;
 }
 
-/** Prueft Zugangsdaten gegen die Datenbank (Benutzername + 4-stellige PIN). */
-export async function authenticate(username: string, pin: string): Promise<SessionUser | null> {
-  const u = await prisma.user.findUnique({ where: { username: username.toLowerCase().trim() } });
-  if (!u || !u.aktiv) return null;
-  const ok = await verifyPin(pin, u.passwordHash);
-  if (!ok) return null;
-  await prisma.user.update({ where: { id: u.id }, data: { letzterLogin: new Date() } });
+function toSessionUser(u: User): SessionUser {
   return {
     id: u.id,
     username: u.username,
@@ -98,4 +93,75 @@ export async function authenticate(username: string, pin: string): Promise<Sessi
     kuerzel: u.kuerzel,
     role: u.role,
   };
+}
+
+/** Prueft Zugangsdaten gegen die Datenbank (Benutzername + 4-stellige PIN). */
+export async function authenticate(username: string, pin: string): Promise<SessionUser | null> {
+  const u = await prisma.user.findUnique({ where: { username: username.toLowerCase().trim() } });
+  if (!u || !u.aktiv) return null;
+  const ok = await verifyPin(pin, u.passwordHash);
+  if (!ok) return null;
+  await prisma.user.update({ where: { id: u.id }, data: { letzterLogin: new Date() } });
+  return toSessionUser(u);
+}
+
+/** Suche nach dem Anmeldenamen wie ihn das Portal schickt: ohne Beachtung der Gross-/Kleinschreibung. */
+function portalKontoWhere(anmeldename: string) {
+  return { username: { equals: anmeldename, mode: 'insensitive' as const } };
+}
+
+/**
+ * Die Datenbank-Suche oben behandelt "_" und "%" im Namen als Platzhalter ("a_b" faende auch "axb").
+ * Deshalb zaehlen nur Treffer, deren Benutzername wirklich gleich ist.
+ */
+function genauGleich<T extends { username: string }>(treffer: T[], anmeldename: string): T[] {
+  const soll = anmeldename.toLowerCase();
+  return treffer.filter((u) => u.username.toLowerCase() === soll);
+}
+
+/**
+ * Anmeldung ueber das Portal (ohne PIN): sucht genau ein aktives Konto, dessen
+ * Benutzername ohne Beachtung der Gross-/Kleinschreibung dem Anmeldenamen entspricht.
+ */
+export async function authenticatePortal(anmeldename: string): Promise<SessionUser | null> {
+  const name = anmeldename.trim();
+  if (!name) return null;
+  const treffer = genauGleich(
+    await prisma.user.findMany({ where: { ...portalKontoWhere(name), aktiv: true } }),
+    name,
+  );
+  if (treffer.length !== 1) return null;
+  const u = treffer[0];
+  await prisma.user.update({ where: { id: u.id }, data: { letzterLogin: new Date() } });
+  return toSessionUser(u);
+}
+
+/**
+ * Konto-Auskunft fuer das Portal: gleiche Suche wie authenticatePortal, aber auch
+ * deaktivierte Konten und ohne etwas zu aendern. `aktiv` ist nur dann true, wenn die
+ * Anmeldung ueber das Portal gelingen wuerde (genau ein aktives Konto).
+ */
+export async function findePortalKonto(anmeldename: string): Promise<{ aktiv: boolean; role: Role } | null> {
+  const name = anmeldename.trim();
+  if (!name) return null;
+  const treffer = genauGleich(
+    await prisma.user.findMany({
+      where: portalKontoWhere(name),
+      orderBy: [{ aktiv: 'desc' }, { createdAt: 'asc' }],
+      select: { aktiv: true, role: true, username: true },
+    }),
+    name,
+  );
+  if (treffer.length === 0) return null;
+  const aktive = treffer.filter((u) => u.aktiv);
+  return { aktiv: aktive.length === 1, role: treffer[0].role };
+}
+
+/**
+ * Schliesst eine erfolgreiche Anmeldung ab: Session-Cookie setzen und Audit-Eintrag
+ * schreiben. Gemeinsamer Weg fuer PIN-Login und Portal-Anmeldung.
+ */
+export async function loginSession(user: SessionUser, details: string): Promise<void> {
+  await createSession(user);
+  await audit(user, 'LOGIN', 'User', user.id, details);
 }

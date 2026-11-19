@@ -59,6 +59,7 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `SEED_ADMIN_FIRSTNAME` | –       | Vorname des Admins (für Kürzel)                                     |
 | `SEED_ADMIN_LASTNAME`  | –       | Nachname des Admins (für Kürzel)                                    |
 | `SEED_DEMO_DATA`       | –       | `true` = Demo-Mitarbeiter/-Interessenten anlegen, sonst `false`     |
+| `PORTAL_SECRET`        | –       | Anbindung an das Portal (min. 32 Zeichen), siehe Abschnitt 10       |
 | `PORT`                 | –       | Port (von Railway gesetzt)                                          |
 
 > **Wichtig:** `SEED_ADMIN_PASSWORD` nach dem ersten Login ändern. Demodaten in der
@@ -199,6 +200,39 @@ Mit `SEED_DEMO_DATA=true` werden angelegt:
 
 > Diese Zugangsdaten **nur zum Testen** verwenden und in der Produktion ändern bzw.
 > Demodaten deaktivieren.
+
+---
+
+## 10. Anbindung an das Portal
+
+Die Warteliste kann an das zentrale Wunsch-Pflege Portal angebunden werden (App-ID `warteliste`).
+Dazu im App-Service die Variable `PORTAL_SECRET` setzen (gemeinsames Geheimnis, **mindestens
+32 Zeichen**) und denselben Wert im Portal als `APP_WARTELISTE_SECRET` eintragen. Ohne diese
+Variable sind alle Endpunkte abgeschaltet (`404`) und die Anwendung verhält sich wie bisher.
+
+| Methode | Pfad                                   | Beschreibung |
+|---------|----------------------------------------|--------------|
+| GET     | `/api/portal/summary`                  | Kennzahlen für das Portal (nur Anzahlen, keine Namen). Aufruf mit `Authorization: Bearer <PORTAL_SECRET>`. |
+| GET     | `/api/portal/sso?token=<JWT>&ziel=<pfad>` | Automatische Anmeldung: Das Portal schickt ein 60 Sekunden gültiges, nur einmal verwendbares Token (HS256). `sub` muss der **Benutzername** eines aktiven Kontos sein (Groß-/Kleinschreibung egal). |
+| GET     | `/api/portal/rollen`                   | Rollen für die Auswahl im Portal: `VERWALTUNG` (Standard), `PDL`, `GESCHAEFTSFUEHRUNG`. Aufruf mit Bearer wie oben. |
+| GET     | `/api/portal/konto?benutzername=<name>` | Auskunft, ob es das Konto gibt, ob es aktiv ist und welche Rolle es hat (gleiche Suche wie bei der Anmeldung). Aufruf mit Bearer wie oben. |
+| POST    | `/api/portal/konto`                    | Legt ein Konto an (`benutzername`, `vorname`, `nachname`, `rolle` als JSON). Gibt es das Konto schon, wird nichts geändert. Aufruf mit Bearer wie oben. |
+
+- Die Anmeldung über das Portal erzeugt dieselbe Session wie der PIN-Login und wird im
+  Audit-Trail als „Anmeldung über Portal“ protokolliert. Rollen und Rechte kommen weiterhin
+  ausschließlich aus der Warteliste.
+- Deaktivierte Konten werden nicht angemeldet; bei jedem Fehler landet man auf der normalen
+  Anmeldeseite.
+- Konten aus dem Portal: Das Kürzel wird wie in der Benutzerverwaltung aus dem Namen gebildet, der
+  Benutzername klein gespeichert (3–50 Zeichen: a–z, Ziffern, dazwischen `.`, `-` oder `_`). Das Konto
+  bekommt **keine PIN** und kann sich zunächst nur über das Portal anmelden; eine PIN vergibt bei
+  Bedarf die Benutzerverwaltung. Vorhandene Konten werden nie verändert oder reaktiviert. Im
+  Audit-Trail steht der Eintrag mit dem Vermerk „über Portal“ (ohne Kürzel, da niemand angemeldet ist).
+  Achtung: Beim Bearbeiten in der Benutzerverwaltung wird der Benutzername wie gewohnt neu aus
+  Vor- und Nachname gebildet (`p.muster`); weicht der im Portal gewählte Name davon ab, muss er
+  danach im Portal angepasst werden.
+- Gemeldete Kennzahlen: überfällige Wiedervorlagen, überfällige Rückmeldungen, in 7 Tagen
+  fällige Wiedervorlagen, unbearbeitete neue Anfragen, Wartezeit über 3 Monate, freie Plätze.
 
 ---
 
