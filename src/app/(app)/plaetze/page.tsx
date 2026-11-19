@@ -1,12 +1,12 @@
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import PlaetzeClient from '@/components/PlaetzeClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PlaetzePage() {
-  const user = await getSession();
+  const user = await requireUser();
   const canManage = can(user, 'platz.manage');
 
   const [standorte, plaetze] = await Promise.all([

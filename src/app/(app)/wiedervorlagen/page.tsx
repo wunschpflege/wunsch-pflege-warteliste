@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import { toggleWiedervorlage, deleteWiedervorlage } from '../warteliste/actions';
 import WiedervorlageForm from '@/components/WiedervorlageForm';
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function WiedervorlagenPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
   const sp = await searchParams;
-  const user = await getSession();
+  const user = await requireUser();
   if (!can(user, 'wiedervorlage.manage')) redirect('/dashboard');
 
   const showDone = sp.filter === 'erledigt';

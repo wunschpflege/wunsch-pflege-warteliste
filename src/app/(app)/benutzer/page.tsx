@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can, ROLE_LABEL } from '@/lib/rbac';
 import { fmtDateTime } from '@/lib/labels';
 import { saveUser, toggleUserAktiv } from './actions';
@@ -14,7 +14,7 @@ export default async function BenutzerPage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const user = await getSession();
+  const user = await requireUser();
   if (!can(user, 'user.manage')) redirect('/dashboard');
 
   const sp = await searchParams;

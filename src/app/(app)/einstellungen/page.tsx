@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can, getMatrix } from '@/lib/rbac';
 import { saveMatrix } from './actions';
 import EinstellungenForm from './form';
@@ -7,7 +7,7 @@ import EinstellungenForm from './form';
 export const dynamic = 'force-dynamic';
 
 export default async function EinstellungenPage() {
-  const user = await getSession();
+  const user = await requireUser();
   if (!can(user, 'user.manage')) redirect('/dashboard');
 
   const matrix = await getMatrix();

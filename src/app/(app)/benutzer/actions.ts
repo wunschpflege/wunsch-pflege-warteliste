@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { requireUser, hashPin } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac';
 import { audit } from '@/lib/audit';
-import { uniqueKuerzel, benutzerAnlegen } from '@/lib/benutzer';
+import { uniqueKuerzel, benutzerAnlegen, benutzerAktivSetzen } from '@/lib/benutzer';
 import { userSchema, formToObject } from '@/lib/validation';
 
 type State = { ok: boolean; error?: string };
@@ -94,7 +94,6 @@ export async function toggleUserAktiv(id: string): Promise<void> {
   if (id === actor.id) return;
   const u = await prisma.user.findUnique({ where: { id } });
   if (!u) return;
-  await prisma.user.update({ where: { id }, data: { aktiv: !u.aktiv } });
-  await audit(actor, 'UPDATE', 'User', id, u.aktiv ? 'deaktiviert' : 'aktiviert');
+  await benutzerAktivSetzen(id, !u.aktiv, actor);
   revalidatePath('/benutzer');
 }

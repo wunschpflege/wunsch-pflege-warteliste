@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { authenticate, loginSession } from '@/lib/auth';
+import { nurPortalAnmeldung } from '@/lib/portal';
+import { NUR_PORTAL_HINWEIS } from '@/lib/portal-anmeldung';
 
 // ─── Brute-Force-Schutz ──────────────────────────────────────────────────────
 // Erlaubt max. 5 Fehlversuche pro IP innerhalb von 15 Minuten.
@@ -59,6 +61,11 @@ function recordSuccess(ip: string): void {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // Anmeldung nur noch ueber das Portal: PIN-Anmeldung wird hier abgelehnt, nicht nur das Formular ausgeblendet
+  if (nurPortalAnmeldung()) {
+    return NextResponse.json({ error: NUR_PORTAL_HINWEIS }, { status: 403, headers: { 'Cache-Control': 'no-store' } });
+  }
+
   const ip = getIp(req);
   const { blocked } = checkRateLimit(ip);
 

@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import { redirect } from 'next/navigation';
 import { fmtDate } from '@/lib/labels';
@@ -19,7 +19,7 @@ const GRUND_COLOR: Record<string, string> = {
 };
 
 export default async function ArchivPage() {
-  const user = await getSession();
+  const user = await requireUser();
   if (!can(user, 'platz.manage')) redirect('/dashboard');
 
   const eintraege = await (prisma as any).bewohnerArchiv.findMany({

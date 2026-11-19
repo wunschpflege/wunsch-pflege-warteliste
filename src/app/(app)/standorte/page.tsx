@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import { saveStandort, toggleStandort, deleteStandort } from './actions';
 import StandortFormClient from './form';
@@ -12,7 +12,7 @@ export default async function StandortePage({
 }: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
-  const user = await getSession();
+  const user = await requireUser();
   if (!can(user, 'standort.manage')) redirect('/dashboard');
 
   const sp = await searchParams;

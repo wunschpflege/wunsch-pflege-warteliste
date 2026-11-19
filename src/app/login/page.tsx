@@ -1,92 +1,15 @@
-'use client';
+import { Suspense } from 'react';
+import { portalAnmeldeLink } from '@/lib/portal';
+import LoginForm from './form';
 
-import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+// Die Einstellung PORTAL_ANMELDUNG_URL wird beim Aufruf gelesen, nicht beim Build
+export const dynamic = 'force-dynamic';
 
-function LoginForm() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const [username, setUsername] = useState('');
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  // Gesetzt, wenn die Anmeldung nur noch ueber das Portal laeuft (PORTAL_ANMELDUNG_URL); sonst wie bisher
+  const portalLink = portalAnmeldeLink();
+  const portalFehler = portalLink !== null && (await searchParams).portal === 'fehler';
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!/^\d{4}$/.test(pin)) {
-      setError('PIN muss genau 4 Ziffern enthalten.');
-      return;
-    }
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, pin }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        setError(d.error ?? 'Anmeldung fehlgeschlagen.');
-        return;
-      }
-      router.push(params.get('next') || '/dashboard');
-      router.refresh();
-    } catch {
-      setError('Verbindungsfehler. Bitte erneut versuchen.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <form onSubmit={submit} className="card p-6 space-y-4">
-      <h2 className="text-base font-semibold">Anmeldung für Mitarbeiter</h2>
-
-      <div>
-        <label className="label" htmlFor="username">Benutzername</label>
-        <input
-          id="username"
-          type="text"
-          autoComplete="username"
-          required
-          className="input"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          placeholder="m.mustermann"
-        />
-      </div>
-      <div>
-        <label className="label" htmlFor="pin">PIN (4 Ziffern)</label>
-        <input
-          id="pin"
-          type="password"
-          inputMode="numeric"
-          pattern="\d{4}"
-          maxLength={4}
-          autoComplete="current-password"
-          required
-          className="input tracking-[0.5em] text-center text-xl"
-          value={pin}
-          onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-          placeholder="••••"
-        />
-      </div>
-
-      {error && (
-        <p className="text-sm text-red-600 bg-red-50 dark:bg-red-900/30 rounded-lg px-3 py-2">
-          {error}
-        </p>
-      )}
-
-      <button type="submit" className="btn-primary w-full" disabled={loading}>
-        {loading ? 'Anmeldung läuft…' : 'Anmelden'}
-      </button>
-    </form>
-  );
-}
-
-export default function LoginPage() {
   return (
     <main className="min-h-screen grid place-items-center px-4">
       <div className="w-full max-w-sm">
@@ -100,9 +23,26 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <Suspense fallback={<div className="card p-6 text-center text-muted">Lädt…</div>}>
-          <LoginForm />
-        </Suspense>
+        {portalLink ? (
+          <div className="card p-6 space-y-4">
+            <h2 className="text-base font-semibold">Anmeldung für Mitarbeiter</h2>
+            <p className="text-sm">
+              Die Anmeldung läuft über das Wunsch-Pflege Portal. Eine eigene PIN für die Warteliste ist nicht mehr nötig.
+            </p>
+            {portalFehler && (
+              <p role="alert" className="text-sm text-red-600 bg-red-50 dark:bg-red-900/30 rounded-lg px-3 py-2">
+                Die Anmeldung über das Portal hat nicht geklappt. Bitte im Portal erneut auf die Warteliste tippen.
+                Klappt es wieder nicht, gibt es in der Warteliste vermutlich kein aktives Konto für dich – bitte an
+                die Verwaltung wenden.
+              </p>
+            )}
+            <a href={portalLink} className="btn-primary w-full">Über das Portal anmelden</a>
+          </div>
+        ) : (
+          <Suspense fallback={<div className="card p-6 text-center text-muted">Lädt…</div>}>
+            <LoginForm />
+          </Suspense>
+        )}
 
         <p className="text-xs text-muted text-center mt-4">
           Zugriff nur für autorisierte Mitarbeiter. Alle Aktivitäten werden protokolliert.

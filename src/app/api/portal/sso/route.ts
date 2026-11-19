@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
 import { authenticatePortal, loginSession } from '@/lib/auth';
-import { PORTAL_APP_ID, PORTAL_ISSUER, portalSecret, jtiEinloesen, sicheresZiel } from '@/lib/portal';
+import { PORTAL_APP_ID, PORTAL_ISSUER, portalSecret, jtiEinloesen, sicheresZiel, nurPortalAnmeldung } from '@/lib/portal';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,9 @@ function weiter(pfad: string): NextResponse {
 function abgelehnt(grund: string): NextResponse {
   // Keine Details an den Browser, nur ins Server-Log (ohne Token)
   console.warn(`[portal] SSO abgelehnt: ${grund}`);
-  return weiter('/login');
+  // Laeuft die Anmeldung nur noch ueber das Portal, zeigt die Anmeldeseite einen allgemeinen Hinweis,
+  // dass es nicht geklappt hat (sonst stuende dort nur der Knopf zurueck zum Portal).
+  return weiter(nurPortalAnmeldung() ? '/login?portal=fehler' : '/login');
 }
 
 function getIp(req: NextRequest): string {

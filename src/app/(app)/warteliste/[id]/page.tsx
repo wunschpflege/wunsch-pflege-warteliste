@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import InteressentForm from '@/components/InteressentForm';
 import WiedervorlageForm from '@/components/WiedervorlageForm';
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function DetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const user = await getSession();
+  const user = await requireUser();
   if (!can(user, 'interessent.read')) redirect('/dashboard');
 
   const i = await prisma.interessent.findUnique({

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import {
   STATUS_LABEL, STATUS_COLOR, PFLEGEGRAD_LABEL,
@@ -33,7 +33,7 @@ type SP = Record<string, string | undefined>;
 
 export default async function WartelistePage({ searchParams }: { searchParams: Promise<SP> }) {
   const sp = await searchParams;
-  const user = await getSession();
+  const user = await requireUser();
   const tab = sp.tab ?? 'interessenten';
   const q = (sp.q ?? '').trim();
   const sortBy = sp.sortBy ?? 'createdAt';

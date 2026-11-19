@@ -1,10 +1,12 @@
 import 'server-only';
+import { cache } from 'react';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 import { audit } from './audit';
-import type { Role, User } from '@prisma/client';
+import type { Prisma, Role, User } from '@prisma/client';
 
 const COOKIE = 'wp_session';
 const TTL_HOURS = Number(process.env.SESSION_TTL_HOURS ?? '8');
@@ -57,30 +59,40 @@ export async function destroySession(): Promise<void> {
   store.delete(COOKIE);
 }
 
-/** Liest und verifiziert die Session. Gibt null zurueck wenn nicht angemeldet. */
-export async function getSession(): Promise<SessionUser | null> {
+/**
+ * Liest und verifiziert die Session. Gibt null zurueck wenn nicht angemeldet.
+ *
+ * Das Cookie allein reicht nicht: Bei jeder Anfrage wird in der Datenbank nachgesehen, ob es das
+ * Konto noch gibt und ob es aktiv ist. So wirkt eine Sperre (Benutzerverwaltung oder Portal) sofort
+ * und nicht erst, wenn das Cookie ablaeuft. Name, Kuerzel und Rolle kommen aus der Datenbank,
+ * nicht aus dem Cookie; eine geaenderte Rolle gilt damit ebenfalls sofort.
+ * Innerhalb eines Seitenaufbaus wird nur einmal nachgesehen (cache).
+ */
+export const getSession = cache(async (): Promise<SessionUser | null> => {
   const store = await cookies();
   const token = store.get(COOKIE)?.value;
   if (!token) return null;
+  let id: string;
   try {
     const { payload } = await jwtVerify(token, secret());
-    return {
-      id: String(payload.id),
-      username: String(payload.username),
-      vorname: String(payload.vorname),
-      nachname: String(payload.nachname),
-      kuerzel: String(payload.kuerzel),
-      role: payload.role as Role,
-    };
+    if (typeof payload.id !== 'string' || !payload.id) return null;
+    id = payload.id;
   } catch {
     return null;
   }
-}
+  const u = await prisma.user.findUnique({ where: { id } });
+  if (!u || !u.aktiv) return null;
+  return toSessionUser(u);
+});
 
-/** Wirft, wenn nicht angemeldet. Fuer Server-Komponenten/Actions. */
+/**
+ * Angemeldeter Benutzer fuer Seiten und Server-Actions. Ohne gueltige Sitzung (nicht angemeldet,
+ * Konto gesperrt oder geloescht) geht es zur Anmeldeseite; der Aufruf kehrt dann nicht zurueck.
+ * Jede Seite prueft selbst: Das gemeinsame Layout wird beim Wechsel zwischen Seiten nicht neu ausgefuehrt.
+ */
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSession();
-  if (!user) throw new Error('UNAUTHENTICATED');
+  if (!user) redirect('/login');
   return user;
 }
 
@@ -155,6 +167,25 @@ export async function findePortalKonto(anmeldename: string): Promise<{ aktiv: bo
   if (treffer.length === 0) return null;
   const aktive = treffer.filter((u) => u.aktiv);
   return { aktiv: aktive.length === 1, role: treffer[0].role };
+}
+
+/**
+ * Alle Konten (auch deaktivierte) zu einem Anmeldenamen, gleiche Suche wie authenticatePortal und
+ * findePortalKonto. Fuer das Sperren ueber das Portal; `db` kann eine laufende Transaktion sein.
+ */
+export async function portalKontoTreffer(
+  anmeldename: string,
+  db: Prisma.TransactionClient = prisma,
+): Promise<User[]> {
+  const name = anmeldename.trim();
+  if (!name) return [];
+  return genauGleich(
+    await db.user.findMany({
+      where: portalKontoWhere(name),
+      orderBy: [{ aktiv: 'desc' }, { createdAt: 'asc' }],
+    }),
+    name,
+  );
 }
 
 /**
