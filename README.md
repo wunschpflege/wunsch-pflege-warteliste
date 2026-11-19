@@ -217,6 +217,7 @@ Variable sind alle Endpunkte abgeschaltet (`404`) und die Anwendung verhält sic
 | GET     | `/api/portal/rollen`                   | Rollen für die Auswahl im Portal: `VERWALTUNG` (Standard), `PDL`, `GESCHAEFTSFUEHRUNG`. Aufruf mit Bearer wie oben. |
 | GET     | `/api/portal/konto?benutzername=<name>` | Auskunft, ob es das Konto gibt, ob es aktiv ist und welche Rolle es hat (gleiche Suche wie bei der Anmeldung). Aufruf mit Bearer wie oben. |
 | POST    | `/api/portal/konto`                    | Legt ein Konto an (`benutzername`, `vorname`, `nachname`, `rolle` als JSON). Gibt es das Konto schon, wird nichts geändert. Aufruf mit Bearer wie oben. |
+| POST    | `/api/portal/konto/sperren`            | Sperrt (deaktiviert) ein Konto (`benutzername` als JSON), z. B. wenn jemand das Unternehmen verlässt. Beliebig oft wiederholbar. Aufruf mit Bearer wie oben. |
 
 - Die Anmeldung über das Portal erzeugt dieselbe Session wie der PIN-Login und wird im
   Audit-Trail als „Anmeldung über Portal“ protokolliert. Rollen und Rechte kommen weiterhin
@@ -231,6 +232,13 @@ Variable sind alle Endpunkte abgeschaltet (`404`) und die Anwendung verhält sic
   Achtung: Beim Bearbeiten in der Benutzerverwaltung wird der Benutzername wie gewohnt neu aus
   Vor- und Nachname gebildet (`p.muster`); weicht der im Portal gewählte Name davon ab, muss er
   danach im Portal angepasst werden.
+- Sperren aus dem Portal: Das Konto wird genauso deaktiviert wie in der Benutzerverwaltung
+  („Deaktivieren“); im Audit-Trail steht „deaktiviert – über Portal“. Die Sperre wirkt **sofort**:
+  Die Warteliste prüft bei jeder Anfrage in der Datenbank, ob das Konto noch aktiv ist, eine laufende
+  Sitzung endet also mit dem nächsten Klick (das gilt auch beim Deaktivieren in der
+  Benutzerverwaltung; eine geänderte Rolle gilt ebenfalls sofort). Das **letzte aktive Konto der
+  Geschäftsführung** wird nicht gesperrt (Antwort `409`), damit sich niemand aussperrt. Entsperrt
+  wird nur in der Benutzerverwaltung der Warteliste, nie über das Portal.
 - Gemeldete Kennzahlen: überfällige Wiedervorlagen, überfällige Rückmeldungen, in 7 Tagen
   fällige Wiedervorlagen, unbearbeitete neue Anfragen, Wartezeit über 3 Monate, freie Plätze.
 

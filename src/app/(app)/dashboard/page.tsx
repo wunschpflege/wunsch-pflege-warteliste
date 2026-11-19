@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { STATUS_LABEL, STATUS_COLOR, fmtDateTime, fmtDate, WV_TYP_LABEL } from '@/lib/labels';
 import AktivitaetenBlock from '@/components/AktivitaetenBlock';
 
@@ -17,7 +17,7 @@ function StatCard({ label, value, href, accent }: { label: string; value: number
 }
 
 export default async function Dashboard() {
-  const user = await getSession();
+  const user = await requireUser();
   const now = new Date();
   const weekAgo = new Date(Date.now() - 5 * 86_400_000);
   const in7 = new Date(Date.now() + 7 * 86_400_000);

@@ -1,13 +1,11 @@
-import { redirect } from 'next/navigation';
-import { getSession } from '@/lib/auth';
+import { requireUser } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import Nav from '@/components/Nav';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const user = await getSession();
-  if (!user) redirect('/login');
+  const user = await requireUser();
 
   return (
     <div className="md:flex min-h-screen">

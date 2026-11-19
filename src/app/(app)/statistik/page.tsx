@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma';
+import { requireUser } from '@/lib/auth';
 import { STATUS_LABEL, PFLEGEGRAD_LABEL } from '@/lib/labels';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,7 @@ function StatCard({ label, value, accent }: { label: string; value: number | str
 }
 
 export default async function StatistikPage() {
+  await requireUser();
   const inaktiveStatus = ['EINGEZOGEN', 'ABGELEHNT', 'ARCHIVIERT'];
   const now = new Date();
 
