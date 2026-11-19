@@ -117,7 +117,32 @@ tbody tr:hover {
   background-color: rgba(220,38,38,0.04);
 }
 
+/* Auf dem Handy nur Hochformat: Hinweis ueber allem, sichtbar nur mit der Klasse auf <html>
+   (gesetzt von src/components/NurHochkant.tsx erst im Browser). */
+.nur-hochkant-hinweis { display: none; }
+html.nur-hochkant { overflow: hidden; }
+html.nur-hochkant .nur-hochkant-hinweis {
+  display: flex;
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  text-align: center;
+  background: var(--bg);
+  color: var(--text);
+  overscroll-behavior: contain;
+  touch-action: none;
+}
+.nur-hochkant-symbol { color: var(--sidebar-active); width: 4.5rem; height: 4.5rem; flex-shrink: 0; }
+.nur-hochkant-titel { font-size: 1.25rem; font-weight: 700; line-height: 1.3; margin: 0; }
+.nur-hochkant-text { font-size: 1rem; color: var(--muted); margin: 0; max-width: 28rem; }
+
 @media print {
+  .nur-hochkant-hinweis { display: none !important; }
   nav, aside, .no-print { display: none !important; }
   .card { box-shadow: none; border: 1px solid #ccc; }
   body { font-size: 12px; }
