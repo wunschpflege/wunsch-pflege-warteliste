@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { getSession, nichtAngemeldet } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import { audit, diffAndLog } from '@/lib/audit';
 import { interessentSchema } from '@/lib/validation';
@@ -18,7 +18,7 @@ const FIELDS = [
 /** GET /api/interessenten/:id */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getSession();
-  if (!user) return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
+  if (!user) return nichtAngemeldet();
   if (!can(user, 'interessent.read')) return NextResponse.json({ error: 'Keine Berechtigung' }, { status: 403 });
 
   const { id } = await params;
@@ -38,7 +38,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 /** PATCH /api/interessenten/:id */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getSession();
-  if (!user) return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
+  if (!user) return nichtAngemeldet();
   if (!can(user, 'interessent.update')) return NextResponse.json({ error: 'Keine Berechtigung' }, { status: 403 });
 
   const { id } = await params;
@@ -78,7 +78,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 /** DELETE /api/interessenten/:id */
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getSession();
-  if (!user) return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
+  if (!user) return nichtAngemeldet();
   if (!can(user, 'interessent.delete')) return NextResponse.json({ error: 'Keine Berechtigung' }, { status: 403 });
 
   const { id } = await params;

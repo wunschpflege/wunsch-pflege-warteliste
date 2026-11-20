@@ -54,6 +54,7 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 | `DATABASE_URL`         | ✅      | PostgreSQL-Connection-String (von Railway automatisch bereitgestellt) |
 | `AUTH_SECRET`          | ✅      | Geheimer Schlüssel für die Session-Signierung (min. 32 Zeichen)     |
 | `SESSION_TTL_HOURS`    | –       | Gültigkeit der Anmeldung in Stunden (Standard: 8)                   |
+| `INAKTIV_MINUTEN`      | –       | Automatische Abmeldung nach so vielen Minuten ohne Eingabe (Standard: 15; erlaubt 0.1–240, sonst 15), siehe „Automatische Abmeldung“ |
 | `SEED_ADMIN_EMAIL`     | –       | E-Mail des initialen Geschäftsführungs-Kontos                       |
 | `SEED_ADMIN_PASSWORD`  | –       | Startpasswort des Admin-Kontos                                      |
 | `SEED_ADMIN_FIRSTNAME` | –       | Vorname des Admins (für Kürzel)                                     |
@@ -152,6 +153,7 @@ Alle Endpunkte erfordern eine gültige Session (Cookie) und prüfen die Rollenre
 | GET     | `/api/health`                 | Health-Check (DB-Verbindung)          |
 | POST    | `/api/auth/login`             | Anmeldung                             |
 | POST    | `/api/auth/logout`            | Abmeldung                             |
+| POST    | `/api/auth/aktiv`             | „Ich bin noch da“ – verlängert die Sitzung (schickt die Oberfläche selbst) |
 | GET     | `/api/interessenten`          | Liste (Filter: `q, standort, status, pflegegrad, mitarbeiter, von, bis, limit`) |
 | POST    | `/api/interessenten`          | Anlegen                               |
 | GET     | `/api/interessenten/:id`      | Einzeldatensatz inkl. Historie        |
@@ -265,3 +267,27 @@ Variable sind alle Endpunkte abgeschaltet (`404`) und die Anwendung verhält sic
 ## Lizenz / Nutzung
 
 Erstellt für die interne produktive Nutzung der Wunsch-Pflege GmbH.
+
+---
+
+## Automatische Abmeldung nach Inaktivität
+
+Wer **15 Minuten** nichts eingibt, wird automatisch abgemeldet (Schutz für unbeaufsichtigte Geräte).
+Die Dauer steht in `INAKTIV_MINUTEN` (Standard 15, erlaubt 0.1 bis 240; kleine Werte nur zum Testen).
+
+- **Serverseitig:** Jede Anmeldung ist eine Zeile in der Tabelle `Sitzung` mit dem Zeitpunkt der letzten
+  Aktivität (geschrieben höchstens alle 30 Sekunden). Ist er älter als die Dauer, ist die Sitzung
+  beendet – das Cookie ist dann wertlos: Seiten leiten zur Anmeldung um, API-Routen antworten mit
+  `401` und `code: "inaktiv"`. `SESSION_TTL_HOURS` gilt daneben weiter; es zählt die kürzere Frist.
+- **Aktivität** sind Seitenaufrufe, Server-Actions und API-Anfragen, die aus Eingaben entstehen.
+  Nicht mitgezählt werden Anfragen, die die Oberfläche von selbst schickt: Kopf `X-Hintergrund: 1`
+  (künftige Hintergrund-Abfragen so kennzeichnen; derzeit gibt es keine). Das Vorausladen verlinkter
+  Seiten durch Next.js führt keine Sitzungsprüfung aus und verlängert die Sitzung deshalb nicht.
+- **Im Browser** (`src/components/InaktivWaechter.tsx`): Tippen, Klicken, Antippen und Scrollen werden
+  höchstens einmal pro Minute an `POST /api/auth/aktiv` gemeldet und über `localStorage` mit anderen
+  Tabs geteilt. 60 Sekunden vor Ablauf erscheint „Bist du noch da?“ mit Zähler und dem Knopf
+  „Angemeldet bleiben“; danach wird abgemeldet und die Anmeldeseite zeigt den Hinweis.
+- **Nicht betroffen:** die Portal-Schnittstelle `/api/portal/*` (eigene Prüfung per `PORTAL_SECRET`);
+  die Anmeldung über das Portal erzeugt wie bisher eine frische Sitzung.
+- Nach der Umstellung müssen sich alle einmal neu anmelden (alte Cookies kennen keine Sitzung).
+- Formulare werden nicht zwischengespeichert: Wer den Hinweis übersieht, verliert nicht gespeicherte Eingaben.

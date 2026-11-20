@@ -141,8 +141,39 @@ html.nur-hochkant .nur-hochkant-hinweis {
 .nur-hochkant-titel { font-size: 1.25rem; font-weight: 700; line-height: 1.3; margin: 0; }
 .nur-hochkant-text { font-size: 1rem; color: var(--muted); margin: 0; max-width: 28rem; }
 
+/* Hinweis vor der automatischen Abmeldung: liegt ueber allem, auch ueber offenen Dialogen und
+   dem Hochformat-Hinweis (steht spaeter im Dokument, gleiche Ebene). */
+.inaktiv-hinweis {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  overscroll-behavior: contain;
+}
+.inaktiv-karte {
+  width: 100%;
+  max-width: 24rem;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1.25rem 1.5rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+}
+.inaktiv-titel { font-size: 1.25rem; font-weight: 700; line-height: 1.3; margin: 0 0 0.5rem; }
+.inaktiv-text { font-size: 1rem; margin: 0 0 1rem; }
+.inaktiv-zahl { font-variant-numeric: tabular-nums; }
+.inaktiv-knopf { width: 100%; min-height: 48px; font-size: 1rem; }
+
 @media print {
-  .nur-hochkant-hinweis { display: none !important; }
+  .nur-hochkant-hinweis, .inaktiv-hinweis { display: none !important; }
   nav, aside, .no-print { display: none !important; }
   .card { box-shadow: none; border: 1px solid #ccc; }
   body { font-size: 12px; }
