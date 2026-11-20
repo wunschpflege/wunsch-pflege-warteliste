@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import ExcelJS from 'exceljs';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { getSession, nichtAngemeldet } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import { audit } from '@/lib/audit';
 import { buildInteressentWhere, filterFromSearchParams } from '@/lib/interessentFilter';
@@ -39,7 +39,7 @@ function csvCell(v: string): string {
 
 export async function GET(req: NextRequest) {
   const user = await getSession();
-  if (!user) return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
+  if (!user) return nichtAngemeldet();
   if (!can(user, 'export')) return NextResponse.json({ error: 'Keine Berechtigung' }, { status: 403 });
 
   const sp = req.nextUrl.searchParams;

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { getSession, nichtAngemeldet } from '@/lib/auth';
 import { can } from '@/lib/rbac';
 import { audit, logHistorie } from '@/lib/audit';
 import { interessentSchema } from '@/lib/validation';
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 /** GET /api/interessenten – Liste mit Such-/Filterparametern. */
 export async function GET(req: NextRequest) {
   const user = await getSession();
-  if (!user) return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
+  if (!user) return nichtAngemeldet();
   if (!can(user, 'interessent.read')) return NextResponse.json({ error: 'Keine Berechtigung' }, { status: 403 });
 
   const sp = req.nextUrl.searchParams;
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 /** POST /api/interessenten – neuen Interessenten anlegen. */
 export async function POST(req: NextRequest) {
   const user = await getSession();
-  if (!user) return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 });
+  if (!user) return nichtAngemeldet();
   if (!can(user, 'interessent.create')) return NextResponse.json({ error: 'Keine Berechtigung' }, { status: 403 });
 
   let body: unknown;

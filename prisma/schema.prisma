@@ -82,8 +82,25 @@ model User {
   angelegteInteressenten Interessent[]  @relation("ErstelltVon")
   wiedervorlagen         Wiedervorlage[]
   auditEintraege         AuditLog[]
+  sitzungen              Sitzung[]
 
   @@index([kuerzel])
+}
+
+// Eine Anmeldung (ein Session-Cookie). Fuehrt den Zeitpunkt der letzten Eingabe fuer die
+// automatische Abmeldung nach Inaktivitaet (INAKTIV_MINUTEN).
+model Sitzung {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt        DateTime  @default(now())
+  letzteAktivitaet DateTime  @default(now())
+  beendetAm        DateTime?
+  // "inaktiv" = automatisch abgemeldet, "abmeldung" = selbst abgemeldet
+  beendetGrund     String?
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Standort {

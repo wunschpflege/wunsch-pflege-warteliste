@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { portalAnmeldeLink } from '@/lib/portal';
+import { abgemeldetHinweis, inaktivMinuten } from '@/lib/inaktiv';
 import LoginForm from './form';
 
 // Die Einstellung PORTAL_ANMELDUNG_URL wird beim Aufruf gelesen, nicht beim Build
@@ -8,7 +9,10 @@ export const dynamic = 'force-dynamic';
 export default async function LoginPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   // Gesetzt, wenn die Anmeldung nur noch ueber das Portal laeuft (PORTAL_ANMELDUNG_URL); sonst wie bisher
   const portalLink = portalAnmeldeLink();
-  const portalFehler = portalLink !== null && (await searchParams).portal === 'fehler';
+  const sp = await searchParams;
+  const portalFehler = portalLink !== null && sp.portal === 'fehler';
+  // Nach der automatischen Abmeldung (zu lange keine Eingabe)
+  const inaktivHinweis = sp.abgemeldet === 'inaktiv' ? abgemeldetHinweis(inaktivMinuten()) : null;
 
   return (
     <main className="min-h-screen grid place-items-center px-4">
@@ -22,6 +26,16 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <p className="text-sm text-muted">Wartelistenverwaltung</p>
           </div>
         </div>
+
+        {inaktivHinweis && (
+          <p
+            role="status"
+            data-testid="abgemeldet-hinweis"
+            className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-base font-semibold text-amber-900 dark:border-amber-500/50 dark:bg-amber-900/30 dark:text-amber-100"
+          >
+            {inaktivHinweis}
+          </p>
+        )}
 
         {portalLink ? (
           <div className="card p-6 space-y-4">
