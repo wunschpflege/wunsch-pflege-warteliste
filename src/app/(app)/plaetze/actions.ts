@@ -60,6 +60,8 @@ export async function platzBelegen(id: string, fd: FormData): Promise<void> {
       belegtSeit: seit ? new Date(seit) : new Date(),
     } as never,
   });
+  // Ohne Bewohnernamen: der Audit-Text nennt nur die Art der Aenderung
+  await audit(user, 'UPDATE', 'Platz', id, 'belegt');
   revalidatePath('/plaetze');
   revalidatePath('/dashboard');
 }
@@ -87,6 +89,7 @@ export async function platzFreigeben(id: string, fd: FormData): Promise<void> {
     where: { id },
     data: { belegt: false, bewohnerName: null, belegtSeit: null } as never,
   });
+  await audit(user, 'UPDATE', 'Platz', id, 'freigegeben');
   revalidatePath('/plaetze');
   revalidatePath('/archiv');
   revalidatePath('/dashboard');
@@ -100,7 +103,7 @@ export async function platzAnlegen(fd: FormData): Promise<void> {
   const bewohnerName = fd.get('bewohnerName') as string;
   const belegtSeit = fd.get('belegtSeit') as string;
   const belegt = !!bewohnerName;
-  await prisma.platz.create({
+  const angelegt = await prisma.platz.create({
     data: {
       standortId,
       zimmernummer: zimmernummer || '-',
@@ -109,6 +112,7 @@ export async function platzAnlegen(fd: FormData): Promise<void> {
       belegtSeit: belegtSeit ? new Date(belegtSeit) : belegt ? new Date() : null,
     } as never,
   });
+  await audit(user, 'CREATE', 'Platz', angelegt.id);
   revalidatePath('/plaetze');
   revalidatePath('/dashboard');
 }
@@ -117,6 +121,7 @@ export async function platzLoeschen(id: string): Promise<void> {
   const user = await requireUser();
   requirePermission(user, 'platz.manage');
   await prisma.platz.delete({ where: { id } });
+  await audit(user, 'DELETE', 'Platz', id);
   revalidatePath('/plaetze');
   revalidatePath('/dashboard');
 }

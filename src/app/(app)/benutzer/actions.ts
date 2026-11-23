@@ -5,7 +5,9 @@ import { prisma } from '@/lib/prisma';
 import { requireUser, hashPin } from '@/lib/auth';
 import { requirePermission } from '@/lib/rbac';
 import { audit } from '@/lib/audit';
-import { uniqueKuerzel, benutzerAnlegen, benutzerAktivSetzen } from '@/lib/benutzer';
+import {
+  uniqueKuerzel, benutzerAnlegen, benutzerAktivSetzen, waereLetzteVerwaltungWeg, LETZTE_VERWALTUNG_ROLLE,
+} from '@/lib/benutzer';
 import { userSchema, formToObject } from '@/lib/validation';
 
 type State = { ok: boolean; error?: string };
@@ -45,6 +47,9 @@ export async function saveUser(id: string | null, _prev: State, fd: FormData): P
   const username = await uniqueUsername(vorname, nachname, id ?? undefined);
 
   if (id) {
+    // Gleicher Schutz wie beim Rollenwechsel ueber das Portal: Die letzte Geschaeftsfuehrung bleibt
+    const bisher = await prisma.user.findUnique({ where: { id }, select: { id: true, role: true, aktiv: true } });
+    if (bisher && (await waereLetzteVerwaltungWeg(bisher, role))) return { ok: false, error: LETZTE_VERWALTUNG_ROLLE };
     const data: Record<string, unknown> = { vorname, nachname, role, kuerzel, username };
     if (pin) data.passwordHash = await hashPin(pin);
     await prisma.user.update({ where: { id }, data });
