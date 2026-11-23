@@ -174,6 +174,7 @@ export async function schnellStatusAendern(id: string, status: string): Promise<
   const user = await requireUser();
   requirePermission(user, 'interessent.update');
   await prisma.interessent.update({ where: { id }, data: { status: status as never } });
+  await audit(user, 'UPDATE', 'Interessent', id, 'Status geändert');
   revalidatePath('/warteliste');
 }
 
@@ -183,6 +184,7 @@ export async function toggleMarkiert(id: string): Promise<void> {
   const i = await prisma.interessent.findUnique({ where: { id } });
   if (!i) return;
   await prisma.interessent.update({ where: { id }, data: { markiert: !(i as any).markiert } });
+  await audit(user, 'UPDATE', 'Interessent', id, 'Markierung geändert');
   revalidatePath('/warteliste');
 }
 
@@ -204,6 +206,8 @@ export async function zimmerAnbieten(id: string, fd: FormData): Promise<void> {
   });
   const i = await prisma.interessent.findUnique({ where: { id } });
   if (i) await logHistorie(id, user, `Zimmer angeboten: ${info ?? ''} · ${wg ?? ''} am ${datum ?? ''}`);
+  // Audit ohne Namen und ohne die eingegebenen Texte
+  await audit(user, 'UPDATE', 'Interessent', id, 'Zimmer angeboten');
   revalidatePath('/warteliste');
 }
 
@@ -222,13 +226,17 @@ export async function letzterKontaktEintragen(id: string, fd: FormData): Promise
   const teile = [`Telefonat am ${datum ?? '–'}`];
   if (wg) teile.push(`Zimmer angeboten: ${wg}${bewohner ? ` (von ${bewohner})` : ''}`);
   await logHistorie(id, user, teile.join(' · '));
+  await audit(user, 'UPDATE', 'Interessent', id, 'Kontakt eingetragen');
   revalidatePath('/warteliste');
 }
 
 export async function bulkStatusAendern(ids: string[], status: string): Promise<void> {
   const user = await requireUser();
   requirePermission(user, 'interessent.update');
-  await prisma.interessent.updateMany({ where: { id: { in: ids } }, data: { status: status as never } });
+  const geaendert = await prisma.interessent.updateMany({ where: { id: { in: ids } }, data: { status: status as never } });
+  if (geaendert.count > 0) {
+    await audit(user, 'UPDATE', 'Interessent', undefined, `Status geändert (${geaendert.count} Datensätze)`);
+  }
   revalidatePath('/warteliste');
 }
 

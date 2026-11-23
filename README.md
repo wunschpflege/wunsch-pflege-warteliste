@@ -223,6 +223,9 @@ Variable sind alle Endpunkte abgeschaltet (`404`) und die Anwendung verhält sic
 | GET     | `/api/portal/aufgaben?benutzername=<name>` | Offene Punkte hinter den Kennzahlen für „Was ist zu tun“ im Portal, passend zu den Rechten des Kontos. Ohne Namen und Freitexte. Aufruf mit Bearer wie oben. |
 | GET     | `/api/portal/konten`                   | Alle Konten (auch gesperrte) mit Rolle und letzter Anmeldung für die Sicherheitsübersicht; `nur_portal` zeigt, ob die PIN-Anmeldung abgeschaltet ist. Nie PIN-Hashes. Aufruf mit Bearer wie oben. |
 | POST    | `/api/portal/konto/sperren`            | Sperrt (deaktiviert) ein Konto (`benutzername` als JSON), z. B. wenn jemand das Unternehmen verlässt. Beliebig oft wiederholbar. Aufruf mit Bearer wie oben. |
+| POST    | `/api/portal/konto/entsperren`         | Entsperrt (aktiviert) ein Konto (`benutzername` als JSON). PIN bleibt, keine Sitzung. Beliebig oft wiederholbar. Aufruf mit Bearer wie oben. |
+| POST    | `/api/portal/konto/rolle`              | Ändert die Rolle eines Kontos (`benutzername`, `rolle` als JSON; IDs wie in `/api/portal/rollen`). Aufruf mit Bearer wie oben. |
+| GET     | `/api/portal/aktivitaet?nach=<marke>`  | Wer hat was getan (aus dem Audit-Trail): anlegen, ändern, erledigen, löschen, Anmeldungen. Ohne Namen Betroffener und ohne Freitexte. Aufruf mit Bearer wie oben. |
 
 - Die Anmeldung über das Portal erzeugt dieselbe Session wie der PIN-Login und wird im
   Audit-Trail als „Anmeldung über Portal“ protokolliert. Rollen und Rechte kommen weiterhin
@@ -242,8 +245,33 @@ Variable sind alle Endpunkte abgeschaltet (`404`) und die Anwendung verhält sic
   Die Warteliste prüft bei jeder Anfrage in der Datenbank, ob das Konto noch aktiv ist, eine laufende
   Sitzung endet also mit dem nächsten Klick (das gilt auch beim Deaktivieren in der
   Benutzerverwaltung; eine geänderte Rolle gilt ebenfalls sofort). Das **letzte aktive Konto der
-  Geschäftsführung** wird nicht gesperrt (Antwort `409`), damit sich niemand aussperrt. Entsperrt
-  wird nur in der Benutzerverwaltung der Warteliste, nie über das Portal.
+  Geschäftsführung** wird nicht gesperrt (Antwort `409`), damit sich niemand aussperrt.
+- Entsperren aus dem Portal (`/api/portal/konto/entsperren`): derselbe Weg wie „Aktivieren“ in der
+  Benutzerverwaltung; im Audit-Trail steht „aktiviert – über Portal“. Die PIN bleibt unverändert, es
+  entsteht keine Sitzung. Gelöschte Konten gibt es in der Warteliste nicht mehr; sie werden als
+  `vorhanden: false` gemeldet und nicht neu angelegt.
+- Rolle ändern aus dem Portal (`/api/portal/konto/rolle`): Geschrieben wird **nur die Rolle** – der
+  Benutzername wird dabei nicht neu gebildet (anders als beim Bearbeiten in der Benutzerverwaltung),
+  Name, Kürzel und PIN bleiben. Die neue Rolle gilt sofort, auch für laufende Sitzungen. Das **letzte
+  aktive Konto der Geschäftsführung** behält seine Rolle (Antwort `409`); derselbe Schutz gilt jetzt auch
+  beim Bearbeiten in der Benutzerverwaltung. Unbekannte Rolle: `400`. Im Audit-Trail steht
+  „Rolle geändert: <alt> → <neu> – über Portal“ (ohne Namen).
+- Aktivität (`/api/portal/aktivitaet`): Quelle ist der Audit-Trail (Aktionen CREATE, UPDATE, DELETE,
+  LOGIN). Geliefert werden die handelnde Person (Benutzername, Name; `null` bei Änderungen über das
+  Portal oder gelöschtem Konto), die Art und ein fester Text wie „Interessent angelegt“, „Wiedervorlage
+  erledigt“, „Status von 3 Interessenten geändert“, „Platz freigegeben“, „Benutzerkonto gesperrt (über das Portal)“, „Anmeldung“.
+  **Datenschutz:** Die im Audit-Trail gespeicherten Texte (Namen von Interessenten, Titel von
+  Wiedervorlagen, Namen bearbeiteter Konten, Standort- und Zimmerbezeichnungen, IP-Adressen) werden nie
+  weitergegeben; jeder Text ist eine feste Zeichenkette des Programms (`src/lib/portal-aktivitaet.ts`).
+  Nicht gemeldet werden Abmeldungen (auch automatische), Exporte (Lesezugriff) und alles, was der
+  Audit-Trail nicht führt. Damit die wichtigen Handlungen vollständig sind, schreiben jetzt auch
+  Schnell- und Sammel-Statuswechsel, Markierung, „Zimmer anbieten“, „Kontakt eintragen“, Platz
+  belegen/freigeben/anlegen/löschen und die PIN-Änderung im Profil einen Audit-Eintrag (nur Art der
+  Handlung, bei Sammeländerungen die Anzahl – keine Namen). Ohne `nach` kommen die letzten 10 Ereignisse,
+  mit `nach=<marke>` die danach (älteste zuerst, höchstens 50). Die Marke ist Zeitpunkt + Kennung des
+  letzten gelieferten Eintrags; Einträge der letzten 1,5 Sekunden kommen erst beim nächsten Abruf, damit
+  keiner übersprungen wird. Eine Abfrage über den vorhandenen Index auf dem Zeitpunkt; keine
+  Schemaänderung.
 - Gemeldete Kennzahlen: überfällige Wiedervorlagen, überfällige Rückmeldungen, in 7 Tagen
   fällige Wiedervorlagen, unbearbeitete neue Anfragen, Wartezeit über 3 Monate, freie Plätze.
 - Aufgabenliste (`/api/portal/aufgaben`): dieselben Quellen und dieselbe Einstufung wie die Kennzahlen.

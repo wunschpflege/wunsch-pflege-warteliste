@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import { requireUser, verifyPin, hashPin } from '@/lib/auth';
+import { audit } from '@/lib/audit';
 import { nurPortalAnmeldung } from '@/lib/portal';
 import { NUR_PORTAL_PIN_HINWEIS } from '@/lib/portal-anmeldung';
 
@@ -40,6 +41,7 @@ export async function changePin(_prev: PinActionState, fd: FormData): Promise<Pi
 
   const neuerHash = await hashPin(neuePin);
   await prisma.user.update({ where: { id: user.id }, data: { passwordHash: neuerHash } });
+  await audit(user, 'UPDATE', 'User', user.id, 'PIN geändert');
 
   revalidatePath('/profil');
   return { ok: true };
